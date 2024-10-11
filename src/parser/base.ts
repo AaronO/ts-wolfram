@@ -22,8 +22,9 @@ export type parserlike<T> = parserFn<T> | parser<T> | string;
 /*
   Allowing functions and strings to act like parsers
 */
+export function toParser<T extends string>(p: T): parser<T>;
 export function toParser<T>(p: parserlike<T>): parser<T>;
-export function toParser <T>(pl: parserlike<T>): parser<T> | parser<string> {
+export function toParser <T>(pl: parserlike<T>) {
   if (typeof pl == 'string') {
     return str(pl);
   }
