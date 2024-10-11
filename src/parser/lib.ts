@@ -33,8 +33,11 @@ export const either = <Ts extends any[]>(...parsers: { [K in keyof Ts]: parserli
     return err(0, 0, '');
   });
 
-export const seq = <Ts extends any[]>(...parsers: { [K in keyof Ts]: parserlike<Ts[K]> }): parser<Ts> =>
-  toParser((source: stream) => {
+export type seq_parser<T extends any[]> = parser<T> & {
+  map2: <U>(fn: ((...values: T) => U)) => parser<U>,
+};
+export const seq = <Ts extends any[]>(...parsers: { [K in keyof Ts]: parserlike<Ts[K]> }): seq_parser<Ts> => {
+  const p = toParser((source: stream) => {
     const res: unknown[] = [];
     for (const parser of parsers) {
       const res_ = toParser(parser)(source);
@@ -45,7 +48,11 @@ export const seq = <Ts extends any[]>(...parsers: { [K in keyof Ts]: parserlike<
       }
     }
     return ok(res as any);
-  });
+  }) as seq_parser<Ts>;
+  p.map2 = <U>(fn: ((...values: Ts) => U)) =>
+    p.map(x => fn(...x));
+  return p;
+}
 
 export const many = <T>(parser: parserlike<T>): parser<T[]> =>
   toParser((source: stream) => {
@@ -63,7 +70,7 @@ export const many = <T>(parser: parserlike<T>): parser<T[]> =>
   });
 
 export const some = <T>(parser: parserlike<T>): parser<T[]> =>
-  seq(parser, many(parser)).map((val) => [val[0], ...val[1]]);
+  seq(parser, many(parser)).map2((ft, rt) => [ft, ...rt]);
 
 export const digit = range('0', '9');
 

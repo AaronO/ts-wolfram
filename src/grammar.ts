@@ -1,19 +1,11 @@
-import { toParser } from './parser/base';
-import { seq, alpha, many, alnum, sepBy, nat, either } from './parser/lib';
+import { ok, fwd } from './parser/base';
+import { seq, alpha, many, alnum, nat, either } from './parser/lib';
+import { stream } from './parser/stream';
 
-const form_ = () => seq(symbol, '[',
-  sepBy(expr, ','),
-  ']'
-).map(val => {
-  const [head,,parts,] = val;
-  return {
-    head, parts,
-  }
-});
+export const expr = fwd(() =>
+  either(form, symbol, nat))
 
-const symbol = () => seq(alpha, many(alnum)).map(chs =>
-  [chs[0], ...chs[1]].join(""));
+const form = (_source: stream) => ok('');
 
-const expr = () => either(symbol, nat);
-
-export const form = toParser(form_);
+const symbol = seq(alpha, many(alnum)).map2((ft, rt) =>
+  [ft, ...rt].join(""));

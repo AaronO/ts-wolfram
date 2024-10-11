@@ -17,8 +17,7 @@ export type parserFn<T> = (source: stream) => result<T, parser_error>;
 export type parser<T> = parserFn<T> & {
   map: <U>(fn: ((value: T) => U)) => parser<U>,
 };
-export type thunk<T> = () => parser<T>;
-export type parserlike<T> = parserFn<T> | parser<T> | string | thunk<T>;
+export type parserlike<T> = parserFn<T> | parser<T> | string;
 
 /*
   Allowing functions and strings to act like parsers
@@ -31,10 +30,6 @@ export function toParser <T>(pl: parserlike<T>): parser<T> | parser<string> {
 
   if ('map' in pl) {
     return pl;
-  }
-
-  if (pl.length == 0) {
-    return toParser((pl as thunk<T>)());
   }
 
   const fn_: parser<T> = pl as parser<T>;
@@ -65,3 +60,9 @@ export const str = <T extends string>(match: T): parser<T> =>
     }
     return ok(match);
   });
+
+/*
+  Laziness helper
+*/
+export const fwd = <T>(thunk: (() => parserlike<T>)): parser<T> =>
+  toParser((source: stream) => toParser(thunk())(source));
