@@ -53,7 +53,7 @@ export function toParser <T>(pl: parserlike<T>) {
   The most basic of parsers
 */
 export const str = <T extends string>(match: T): parser<T> =>
-  keepWs(toParser((source: stream) => {
+  lex(toParser((source: stream) => {
     for (let i = 0; i < match.length; i++) {
       if(source.next() != match[i]) {
         return err(0, 0, '');
@@ -61,6 +61,11 @@ export const str = <T extends string>(match: T): parser<T> =>
     }
     return ok(match);
   }));
+
+export const lex = <T>(p: parserlike<T>) => keepWs((source: stream) => {
+  ws(source);
+  return toParser(p)(source);
+});
 
 export const keepWs = <T>(p: parserlike<T>) =>
   toParser((source: stream) => {
@@ -70,6 +75,20 @@ export const keepWs = <T>(p: parserlike<T>) =>
     source.drop_ws = prev_drop_ws;
     return res;
   });
+
+export const ws = toParser((source: stream) => {
+  while (true) {
+    source.push();
+    const ch = source.next();
+    if (ch?.trim() === "") {
+      source.pop_continue();
+    } else {
+      source.pop_rollback();
+      break;
+    }
+  }
+  return ok({});
+});
 
 /*
   Laziness helper

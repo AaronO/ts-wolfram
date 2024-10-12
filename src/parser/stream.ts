@@ -33,7 +33,7 @@ class string_stream {
       this.col = 1;
     }
 
-    if (this.drop_ws && ch.trim() == "") {
+    if (this.drop_ws && ch.trim() === "") {
       return this.next();
     } else {
       return ch;

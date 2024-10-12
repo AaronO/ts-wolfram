@@ -1,6 +1,6 @@
 import type { parser } from '../parser/base';
 import { Int, Form, Symbol } from './ast';
-import { fwd, keepWs } from '../parser/base';
+import { fwd, lex } from '../parser/base';
 import { seq, alpha, many, alnum, nat, either, sepBy } from '../parser/lib';
 import { stream } from '../parser/stream';
 
@@ -13,7 +13,7 @@ const form = (source: stream) => {
   return res(source);
 };
 
-const symbol = keepWs(seq(alpha, many(alnum)).map2<Symbol>((ft, rt) =>
+const symbol = lex(seq(alpha, many(alnum)).map2<Symbol>((ft, rt) =>
   new Symbol([ft, ...rt].join(""))));
 
 const int = nat.map<Int>(val =>
