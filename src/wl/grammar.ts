@@ -1,7 +1,7 @@
-import type { parser, parserlike } from '../parser/base';
+import type { parser } from '../parser/base';
 import { Int, Form, Symbol } from './ast';
-import { fwd, lex, str } from '../parser/base';
-import { seq, alpha, many, alnum, int, either, sepBy, maybe } from '../parser/lib';
+import { fwd, lex } from '../parser/base';
+import { seq, alpha, many, alnum, int, either, sepBy } from '../parser/lib';
 import { stream } from '../parser/stream';
 
 export const expr = fwd(() =>
