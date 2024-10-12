@@ -36,6 +36,7 @@ export const either = <Ts extends any[]>(...parsers: { [K in keyof Ts]: parserli
 export type seq_parser<T extends any[]> = parser<T> & {
   map2: <U>(fn: ((...values: T) => U)) => parser<U>,
 };
+
 export const seq = <Ts extends any[]>(...parsers: { [K in keyof Ts]: parserlike<Ts[K]> }): seq_parser<Ts> => {
   const p = toParser((source: stream) => {
     const res: unknown[] = [];
