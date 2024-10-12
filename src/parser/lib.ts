@@ -123,14 +123,17 @@ export const sepBy = <T, U>(item: parserlike<T>, sep: parserlike<U>, allowTraili
     }
   });
 
-export type binop<D, O> = [O, binop<D, O>, binop<D, O>] | D;
-export const binop = <D, O>(
-  operand: parserlike<D>,
+export function binop<O, D, N>(
   operator: parserlike<O>,
-) => toParser((source: stream) => {
-  const p = seq(operand, many(seq(operator, operand))).map2<binop<D, O>>((left, rights) => {
-    return rights.reduce<binop<D, O>>((acc, [op, right]) => [op, acc, right], left);
+  operand: parserlike<D>,
+  makeNode: (op: O, left: D | N, right: D) => N
+): parser<N | D> {
+  return toParser((source: stream) => {
+    const p = seq(operand, many(seq(operator, operand))).map2<N | D>((left, rights) => {
+      const acc = rights.reduce<N | D>(
+        (acc, [op, right]) => makeNode(op, acc, right), left);
+      return acc;
+    });
+    return p(source);
   });
-  return p(source);
-});
-
+}

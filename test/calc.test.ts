@@ -2,8 +2,11 @@ import { fwd, ok, str } from "../src/parser/base";
 import { either, int, binop } from "../src/parser/lib";
 import { fromString } from "../src/parser/stream";
 
-const term = fwd(() => binop(factor, either(str('+'), str('-'))));
-const factor = binop(int, either(str('*'), str('/')));
+type node = ['+' | '-' | '*' | '/', node, node] | number;
+const term = fwd(() => binop(either(str('+'), str('-')), factor,
+  (a, b, c) => [a, b, c]));
+const factor = binop(either(str('*'), str('/')), int,
+  (a, b, c) => [a, b, c]);
 
 it('', () => {
   expect(term(fromString("1+2"))).toEqual(ok(['+', 1, 2]));
