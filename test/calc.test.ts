@@ -4,9 +4,9 @@ import { fromString } from "../src/parser/stream";
 
 type node = ['+' | '-' | '*' | '/', node, node] | number;
 const term = fwd(() => binop(either(str('+'), str('-')), factor,
-  (a, b, c) => [a, b, c]));
+  (a, b: node, c): node => [a, b, c]));
 const factor = binop(either(str('*'), str('/')), int,
-  (a, b, c) => [a, b, c]);
+  (a, b: node, c): node => [a, b, c]);
 
 it('', () => {
   expect(term(fromString("1+2"))).toEqual(ok(['+', 1, 2]));
