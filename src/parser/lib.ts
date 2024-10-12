@@ -1,6 +1,6 @@
 import type { stream } from './stream';
 import type { parser, parserlike } from './base';
-import { err, ok, toParser } from './base';
+import { err, ok, toParser, keepWs } from './base';
 
 export const attempt = <T>(parser: parserlike<T>): parser<T> =>
   toParser((source: stream) => {
@@ -74,7 +74,7 @@ export const some = <T>(parser: parserlike<T>): parser<T[]> =>
 
 export const digit = range('0', '9');
 
-export const nat = some(digit).map((val) =>
+export const nat = keepWs(some(digit)).map((val) =>
   parseInt(val.join("")));
 
 export const lower = range('a', 'z');

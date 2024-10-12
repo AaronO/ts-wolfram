@@ -53,13 +53,22 @@ export function toParser <T>(pl: parserlike<T>) {
   The most basic of parsers
 */
 export const str = <T extends string>(match: T): parser<T> =>
-  toParser((source: stream) => {
+  keepWs(toParser((source: stream) => {
     for (let i = 0; i < match.length; i++) {
       if(source.next() != match[i]) {
         return err(0, 0, '');
       }
     }
     return ok(match);
+  }));
+
+export const keepWs = <T>(p: parserlike<T>) =>
+  toParser((source: stream) => {
+    const prev_drop_ws = source.drop_ws;
+    source.drop_ws = false;
+    const res = toParser(p)(source);
+    source.drop_ws = prev_drop_ws;
+    return res;
   });
 
 /*
@@ -67,3 +76,11 @@ export const str = <T extends string>(match: T): parser<T> =>
 */
 export const fwd = <T>(thunk: (() => parserlike<T>)): parser<T> =>
   toParser((source: stream) => toParser(thunk())(source));
+
+/*
+  TODO:
+  - In `either('foo').map(...)` the string 'foo' gets mapped to unknown.
+    Should fix that.
+  - If I could push infinite regress through map, it would be trivial to
+    just specify the AST type in map, and avoid the trick in `form`.
+*/

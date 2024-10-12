@@ -1,13 +1,9 @@
 import { ok } from '../src/parser/base';
 import { fromString } from '../src/parser/stream';
-import { expr } from '../src/grammar';
+import { expr } from '../src/wl/grammar';
+import { Form, Int, Symbol } from '../src/wl/ast';
 
 it('', () => {
-  expect(expr(fromString('Abc[foo,12]'))).toEqual(ok({ type: 'form',
-    head: {type: 'symbol', value: 'Abc'},
-    parts: [
-      { type: 'symbol', value: 'foo'} ,
-      { type: 'int', value: 12}
-    ]
-  }));
+  expect(expr(fromString('Abc[foo, 12]'))).toEqual(ok(new Form(new Symbol("Abc"),
+    [new Symbol("foo"), new Int(12)])));
 });

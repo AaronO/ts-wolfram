@@ -2,6 +2,7 @@
 export type stream = {
   row: number,
   col: number,
+  drop_ws: boolean,
   next: () => string | null,
   push: () => void,
   pop_continue: () => void,
@@ -19,7 +20,7 @@ class string_stream {
     idx: number,
   }[] = [];
 
-  constructor(public source: string) {}
+  constructor(public source: string, public drop_ws: boolean = true) {}
 
   next(): string | null {
     if (this.idx == this.source.length) {
@@ -31,7 +32,12 @@ class string_stream {
       this.row++;
       this.col = 1;
     }
-    return ch;
+
+    if (this.drop_ws && ch.trim() == "") {
+      return this.next();
+    } else {
+      return ch;
+    }
   }
 
   push() {
