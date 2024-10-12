@@ -8,6 +8,12 @@ it('', () => {
 })
 
 it('', () => {
-  expect(expr(fromString('Abc [ fo o, 12]'))).toEqual(ok(new Form(new Symbol("Abc"),
+  expect(expr(fromString('Abc [ foo, 12]'))).toEqual(ok(new Form(new Symbol("Abc"),
     [new Symbol("foo"), new Int(12)])));
 });
+
+/*
+it('', () => {
+  expect(expr(fromString("1 + 2 * 3"))).toEqual(ok("foo"));
+})
+*/

@@ -16,5 +16,15 @@ const form = (source: stream) => {
 const symbol = lex(seq(alpha, many(alnum)).map2<Symbol>((ft, rt) =>
   new Symbol([ft, ...rt].join(""))));
 
+const term = fwd(() => seq(factor, either("+", "-"), factor).map2<Form>((l, op, r) =>
+  new Form(new Symbol(op === '+' ? 'Plus' : 'Minus'), [l, r])));
+
+const factor = (source: stream) => {
+  const res: parser<Form> = seq(expr, either("*", "/"), expr).map2<Form>((l, op, r) =>
+    new Form(new Symbol(op === '*' ? 'Times' : 'Div'), [l, r]));
+  return res(source);
+}
+
 const int = nat.map<Int>(val =>
   new Int(val));
+

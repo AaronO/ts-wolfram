@@ -107,3 +107,9 @@ export const sepBy = <T, U>(item: parserlike<T>, sep: parserlike<U>, allowTraili
       }
     }
   });
+
+export const maybe = <T>(p: parserlike<T>) =>
+  toParser((source: stream) => {
+    const res = attempt(p)(source);
+    return res.type == 'ok' ? res : ok(null);
+  });
