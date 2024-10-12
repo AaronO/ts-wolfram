@@ -77,6 +77,20 @@ export const digit = range('0', '9');
 export const nat = lex(some(digit)).map((val) =>
   parseInt(val.join("")));
 
+export const maybe = <T>(p: parserlike<T>) =>
+  toParser((source: stream) => {
+    const res = attempt(p)(source);
+    return res.type == 'ok' ? res : ok(null);
+  });
+
+export const int = seq(maybe(either('-', '+')), nat).map2((sign, val) => {
+  if (sign === '-') {
+    return -val;
+  } else {
+    return val;
+  }
+});
+
 export const lower = range('a', 'z');
 export const upper = range('A', 'Z');
 export const alpha = either(lower, upper);
@@ -106,10 +120,4 @@ export const sepBy = <T, U>(item: parserlike<T>, sep: parserlike<U>, allowTraili
         res.push(res_.res);
       }
     }
-  });
-
-export const maybe = <T>(p: parserlike<T>) =>
-  toParser((source: stream) => {
-    const res = attempt(p)(source);
-    return res.type == 'ok' ? res : ok(null);
   });

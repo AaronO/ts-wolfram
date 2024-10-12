@@ -1,5 +1,5 @@
 import { ok, str } from '../src/parser/base';
-import { nat, either, many, seq, some, alnum, sepBy, maybe } from '../src/parser/lib';
+import { nat, either, many, seq, some, alnum, sepBy, maybe, int } from '../src/parser/lib';
 import { fromString } from '../src/parser/stream';
 
 it('', () => {
@@ -55,4 +55,12 @@ it('', () => {
 it('', () => {
   expect(maybe('foo')(fromString('foo'))).toEqual(ok('foo'));
   expect(maybe('foo')(fromString('bar'))).toEqual(ok(null));
+});
+
+it('', () => {
+  expect(int(fromString('12'))).toEqual(ok(12));
+  expect(int(fromString('-12'))).toEqual(ok(-12));
+  expect(int(fromString('+12'))).toEqual(ok(12));
+  expect(int(fromString('- 12'))).toEqual(ok(-12));
+  expect(int(fromString('+ 12'))).toEqual(ok(12));
 });

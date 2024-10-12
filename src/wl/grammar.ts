@@ -1,11 +1,11 @@
 import type { parser } from '../parser/base';
 import { Int, Form, Symbol } from './ast';
 import { fwd, lex } from '../parser/base';
-import { seq, alpha, many, alnum, nat, either, sepBy } from '../parser/lib';
+import { seq, alpha, many, alnum, int, either, sepBy } from '../parser/lib';
 import { stream } from '../parser/stream';
 
 export const expr = fwd(() =>
-  either(form, symbol, int))
+  either(form, symbol, integer))
 
 const form = (source: stream) => {
   const res: parser<Form> = seq(symbol, '[', sepBy(expr, ','), ']').map2<Form>((head, _, parts) =>
@@ -25,6 +25,6 @@ const factor = (source: stream) => {
   return res(source);
 }
 
-const int = nat.map<Int>(val =>
+const integer = int.map<Int>(val =>
   new Int(val));
 
