@@ -137,3 +137,26 @@ export function binop<O, D, N>(
     return p(source);
   });
 }
+
+export function binopr<O, D, N>(
+  operator: parserlike<O>,
+  operand: parserlike<D>,
+  makeNode: (op: O, left: D, right: D | N) => N
+): parser<N | D> {
+  return toParser((source: stream) => {
+    const p = seq(operand, many(seq(operator, operand))).map2<N | D>((left, rights) => {
+      if (rights.length === 0) return left;
+
+      // Start from the last operand and reduce from right to left
+      let acc: D | N = rights[rights.length - 1][1];
+      for (let i = rights.length - 2; i >= 0; i--) {
+        const [op, right] = rights[i];
+        acc = makeNode(op, right, acc);
+      }
+
+      return makeNode(rights[0][0], left, acc);
+    });
+
+    return p(source);
+  });
+}

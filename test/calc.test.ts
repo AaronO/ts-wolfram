@@ -1,5 +1,5 @@
 import { fwd, ok, str } from "../src/parser/base";
-import { either, int, binop } from "../src/parser/lib";
+import { either, int, binop, binopr } from "../src/parser/lib";
 import { fromString } from "../src/parser/stream";
 
 type node = ['+' | '-' | '*' | '/', node, node] | number;
@@ -12,4 +12,10 @@ it('', () => {
   expect(term(fromString("1+2"))).toEqual(ok(['+', 1, 2]));
   expect(term(fromString("1+2+3"))).toEqual(ok(['+', ['+', 1, 2], 3]));
   expect(term(fromString("1+2*3"))).toEqual(ok(['+', 1, ['*', 2, 3]]));
+});
+
+const assign = binopr(str('='), int, (a, b, c) => [a, b, c]);
+
+it('', () => {
+  expect(assign(fromString("1=2=3"))).toEqual(ok(['=', 1, ['=', 2, 3]]));
 });

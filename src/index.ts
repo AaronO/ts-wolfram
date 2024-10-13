@@ -20,7 +20,7 @@ const main = async () => {
     if (parsed.type == 'err') {
       console.log("Parsing error");
     } else {
-      console.log(parsed.res.repr());
+      console.log(parsed.res.eval().repr());
     }
   }
 }
