@@ -1,6 +1,4 @@
 
-//export type Expr = Form | Symbol | Int;
-
 export type Expr = Form | Symbol | Int;
 
 export interface Node {

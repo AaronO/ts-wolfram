@@ -1,5 +1,5 @@
 import { createInterface, Interface } from 'readline';
-import { expr } from './wl/grammar';
+import { expr } from './grammar';
 import { fromString } from '@spakhm/ts-parsec';
 
 function q(rl: Interface, query: string): Promise<string> {

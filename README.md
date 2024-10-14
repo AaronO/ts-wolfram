@@ -1,11 +1,11 @@
 
 This is a toy Wolfram/Mathematica language interpreter written in
-Typescript. The goal of the project is for me to develop a better
-understanding of exactly how Mathematica works.
+Typescript.
 
-I first wrote a toy differentiator in Mathematica that's good enough
-to differentiate many simple functions from a standard single variable
-calculus textbook:
+The goal of the project is for me to develop a better understanding of
+exactly how Mathematica works. I first wrote a toy differentiator in
+Mathematica that's good enough to differentiate many simple functions
+from a standard single variable calculus textbook:
 
 ```wl
 Df[_?NumberQ, x_Symbol] = 0;
