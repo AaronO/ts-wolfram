@@ -26,15 +26,15 @@ const Attributes = (parts: Expr[]) => {
   if (parts[0] instanceof Symbol) {
     return new List(attrs(parts[0]));
   } else if (parts[0] instanceof List) {
-    return new List(parts.map(x => {
+    return new List(parts[0].vals.map(x => {
       if (x instanceof Symbol) {
         return new List(attrs(x));
       }
-      throw errArgType('Attributes', ['symbol', 'list of symbols']);
+      throw errArgType('Attributes', ['a symbol', 'a list of symbols']);
     }));
   }
 
-  throw errArgType('Attributes', ['symbol', 'list of symbols']);
+  throw errArgType('Attributes', ['a symbol', 'a list of symbols']);
 }
 
 const Plus = (parts: Expr[]) => {
@@ -77,4 +77,4 @@ const errArgCount = (fnname: string, expected: number, actual: number) =>
   `${fnname} called with ${actual} arguments; ${expected} argument is expected.`;
 
 const errArgType = (fnname: string, types: string[]) =>
-  `${fnname} expects ${types.join(" or a ")}.`;
+  `${fnname} expects ${types.join(" or ")}.`;
