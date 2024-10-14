@@ -13,6 +13,9 @@ export const populateBuiltins = () => {
 
   builtinsTable.set(symbol('Plus'), Plus);
   setAttrs(symbol('Plus'), ["Protected"].map(symbol));
+
+  builtinsTable.set(symbol('Times'), Times);
+  setAttrs(symbol('Times'), ["Protected"].map(symbol));
 }
 
 const Attributes = (parts: Expr[]) => {
@@ -49,5 +52,23 @@ const Plus = (parts: Expr[]) => {
     return new Int(acc);
   } else {
     return new Form(symbol("Plus"), acc == 0 ? rest : [new Int(acc), ...rest]);
+  }
+}
+
+const Times = (parts: Expr[]) => {
+  let acc: number = 1;
+  let rest: Expr[] = [];
+  for (const part of parts) {
+    if (part instanceof Int) {
+      acc *= part.val;
+    } else {
+      rest.push(part);
+    }
+  }
+
+  if (rest.length == 0) {
+    return new Int(acc);
+  } else {
+    return new Form(symbol("Times"), acc == 1 ? rest : [new Int(acc), ...rest]);
   }
 }
