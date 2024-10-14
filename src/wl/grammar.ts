@@ -23,7 +23,7 @@ const term = fwd(() => binop(either('+', '-'), factor, (op, l: Expr, r): Form =>
 
 const factor = fwd(() => binop(either('*', '/'), exponent, (op, l: Expr, r): Form =>
   new Form(new Symbol('Times'), [l, op == '*' ? r : new Form(
-    new Symbol('Power'), [l, new Int(-1)])])));
+    new Symbol('Power'), [r, new Int(-1)])])));
 
 const exponent = fwd(() => binop(either('^'), primitive, (_, l: Expr, r): Form =>
   new Form(new Symbol('Power'), [l, r])));
