@@ -1,10 +1,10 @@
-import { Symbol } from './ast';
+import type { Symbol } from './ast';
 import { symbol } from './symbols';
 import uniq from 'lodash/uniq';
 
 const attrsTable: Map<Symbol, Symbol[]> = new Map();
 
-const supported = ['HoldFirst', 'HoldRest', 'HoldAll', 'Protected'].map(symbol);
+const supported = ['HoldFirst', 'HoldRest', 'HoldAll', 'Protected'];
 
 export const attrs = (sym: Symbol) => attrsTable.get(sym) || [];
 export const setAttrs = (sym: Symbol, attrs_: Symbol[]) => {
@@ -15,7 +15,7 @@ export const setAttrs = (sym: Symbol, attrs_: Symbol[]) => {
 }
 
 const validate = (sym: Symbol) => {
-  if (!supported.includes(sym)) {
+  if (!supported.map(symbol).includes(sym)) {
     throw `${sym.val} is not a known attribute.`;
   }
 }

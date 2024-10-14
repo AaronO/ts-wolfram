@@ -2,7 +2,7 @@ import { attrs } from './attrs';
 import { symbol } from './symbols';
 import { builtin } from './builtins';
 
-export type Expr = Form | Symbol | Int;
+export type Expr = Form | List | Symbol | Int;
 
 export interface Node {
   eval: () => Expr,
@@ -51,6 +51,17 @@ export class Form implements Node {
 
   repr(): string {
     return `${this.head.repr()}[${this.parts.map(x => x.repr()).join(", ")}]`;
+  }
+}
+
+export class List implements Node {
+  constructor(public vals: Expr[]) {}
+  eval(): Expr {
+    return new List(this.vals.map(x => x.eval()));
+  }
+
+  repr (): string {
+    return "{" + this.vals.map(x => x.repr()).join(", ") + "}";
   }
 }
 
