@@ -1,16 +1,25 @@
-import type { parser } from '../parser/base';
 import { Int, Form, Symbol, Expr } from './ast';
-import { fwd, lex } from '../parser/base';
-import { seq, alpha, many, alnum, int, either, sepBy, binop, binopr } from '../parser/lib';
-import { stream } from '../parser/stream';
+import {
+  seq, alpha, many, alnum, int, either, sepBy,
+  binop, binopr, stream, fwd, lex, parser
+} from '@spakhm/ts-parsec';
 
 export const expr = fwd(() => assignment);
 
 const assignment = fwd(() => binopr(either('=', ':='), term, (op, l, r: Expr): Form =>
   new Form(new Symbol(op == '=' ? 'Set' : 'SetDelayed'), [l, r])));
 
-const term = fwd(() => binop(either('+', '-'), factor, (op, l: Expr, r): Form =>
-  new Form(new Symbol(op == '+' ? 'Plus' : 'Minus'), [l, r])));
+const term = fwd(() => binop(either('+', '-'), factor, (op, l: Expr, r): Form => {
+  let right: Expr = r;
+  if (op == '-') {
+    if (right instanceof Int) {
+      right.val = -right.val;
+    } else {
+      right = new Form(new Symbol('Times'), [new Int(-1), right]);
+    }
+  }
+  return new Form(new Symbol('Plus'), [l, right]);
+}));
 
 const factor = fwd(() => binop(either('*', '/'), exponent, (op, l: Expr, r): Form =>
   new Form(new Symbol(op == '*' ? 'Times' : 'Div'), [l, r])));

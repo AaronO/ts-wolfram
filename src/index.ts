@@ -1,6 +1,6 @@
 import { createInterface, Interface } from 'readline';
 import { expr } from './wl/grammar';
-import { fromString } from './parser/stream';
+import { fromString } from '@spakhm/ts-parsec';
 
 function q(rl: Interface, query: string): Promise<string> {
   return new Promise((resolve) => {
