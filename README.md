@@ -38,4 +38,13 @@ Df[Cos[x^2 + 1], x],
 Df[(x + 1)^2, x]
 ```
 
-This has been really fun and instructive to write.
+This has been a really fun and instructive project. Supported features
+(this list is also a reasonably good indicator of the order in which
+the features were implemented):
+
+- __Literals__: parses integers, symbols, forms, arithmetic operators,
+  and lists.
+- __Attributes__: `HoldFirst`, `HoldRest`, `HoldAll`, `Protected`,
+  along with builtins `Attributes`, `SetAttributes`, and
+  `ClearAttributes`.
+

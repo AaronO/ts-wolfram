@@ -1,6 +1,7 @@
 import { createInterface, Interface } from 'readline';
 import { expr } from './grammar';
 import { fromString } from '@spakhm/ts-parsec';
+import { populateBuiltins } from './builtins';
 
 function q(rl: Interface, query: string): Promise<string> {
   return new Promise((resolve) => {
@@ -9,6 +10,8 @@ function q(rl: Interface, query: string): Promise<string> {
 }
 
 const main = async () => {
+  populateBuiltins();
+
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -19,8 +22,13 @@ const main = async () => {
     const parsed = expr(fromString(a));
     if (parsed.type == 'err') {
       console.log("Parsing error");
-    } else {
+      continue;
+    }
+    
+    try {
       console.log(parsed.res.eval().repr());
+    } catch (err) {
+      console.log(err);
     }
   }
 }
