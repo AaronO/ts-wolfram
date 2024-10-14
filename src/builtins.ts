@@ -20,7 +20,7 @@ export const populateBuiltins = () => {
 
 const Attributes = (parts: Expr[]) => {
   if (parts.length != 1) {
-    throw `Attributes called with ${parts.length} arguments; 1 argument is expected.`;
+    throw errArgCount('Attributes', 1, parts.length);
   }
 
   if (parts[0] instanceof Symbol) {
@@ -30,11 +30,11 @@ const Attributes = (parts: Expr[]) => {
       if (x instanceof Symbol) {
         return new List(attrs(x));
       }
-      throw 'Attributes expects symbol or a list of symbols.';
+      throw errArgType('Attributes', ['symbol', 'list of symbols']);
     }));
   }
 
-  throw 'Attributes expects symbol or a list of symbols.';
+  throw errArgType('Attributes', ['symbol', 'list of symbols']);
 }
 
 const Plus = (parts: Expr[]) => {
@@ -72,3 +72,9 @@ const Times = (parts: Expr[]) => {
     return new Form(symbol("Times"), acc == 1 ? rest : [new Int(acc), ...rest]);
   }
 }
+
+const errArgCount = (fnname: string, expected: number, actual: number) =>
+  `${fnname} called with ${actual} arguments; ${expected} argument is expected.`;
+
+const errArgType = (fnname: string, types: string[]) =>
+  `${fnname} expects ${types.join(" or a ")}.`;

@@ -1,4 +1,4 @@
-import { Int, Form, Expr } from './ast';
+import { Int, Form, Expr, List } from './ast';
 import {
   seq, alpha, many, alnum, int, either, sepBy,
   binop, binopr, stream, fwd, lex, parser
@@ -29,13 +29,20 @@ const factor = fwd(() => binop(either('*', '/'), exponent, (op, l: Expr, r): For
 const exponent = fwd(() => binopr(either('^'), primitive, (_, l, r: Expr): Form =>
   new Form(symbol('Power'), [l, r])));
 
-const primitive = fwd(() => either(paren_expr, form, atom));
-const atom = fwd(() => either(symbol_, integer));
+const primitive = fwd(() => either(paren_expr, list_expr, form, atom));
 
 const paren_expr = (source: stream) => {
   const p: parser<Expr> = seq('(', expr, ')').map2((_, e) => e);
   return p(source);
 }
+
+const list_expr = (source: stream) => {
+  const res: parser<List> = seq('{', sepBy(expr, ','), '}').map2<List>((_, els) =>
+    new List(els));
+  return res(source);
+}
+
+const atom = fwd(() => either(symbol_, integer));
 
 const form = (source: stream) => {
   const res: parser<Form> = seq(atom, '[', sepBy(expr, ','), ']').map2<Form>((head, _, parts) =>
