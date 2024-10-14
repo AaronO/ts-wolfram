@@ -1,4 +1,4 @@
-import { Symbol, Expr, List } from './ast';
+import { Int, Symbol, Expr, List, Form } from './ast';
 import { symbol } from './symbols';
 import { attrs, setAttrs } from './attrs';
 
@@ -10,6 +10,9 @@ export const builtin = (sym: Symbol): Builtin | undefined => builtinsTable.get(s
 export const populateBuiltins = () => {
   builtinsTable.set(symbol('Attributes'), Attributes);
   setAttrs(symbol('Attributes'), ["HoldAll", "Protected"].map(symbol));
+
+  builtinsTable.set(symbol('Plus'), Plus);
+  setAttrs(symbol('Plus'), ["Protected"].map(symbol));
 }
 
 const Attributes = (parts: Expr[]) => {
@@ -29,4 +32,22 @@ const Attributes = (parts: Expr[]) => {
   }
 
   throw 'Attributes expects symbol or a list of symbols.';
+}
+
+const Plus = (parts: Expr[]) => {
+  let acc: number = 0;
+  let rest: Expr[] = [];
+  for (const part of parts) {
+    if (part instanceof Int) {
+      acc += part.val;
+    } else {
+      rest.push(part);
+    }
+  }
+
+  if (rest.length == 0) {
+    return new Int(acc);
+  } else {
+    return new Form(symbol("Plus"), acc == 0 ? rest : [new Int(acc), ...rest]);
+  }
 }
