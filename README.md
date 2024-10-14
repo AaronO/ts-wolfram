@@ -45,6 +45,5 @@ the features were implemented):
 - __Literals__: parses integers, symbols, forms, arithmetic operators,
   and lists.
 - __Attributes__: `HoldFirst`, `HoldRest`, `HoldAll`, `Protected`,
-  along with builtins `Attributes`, `SetAttributes`, and
-  `ClearAttributes`.
+  along with the builtin `Attributes`.
 
