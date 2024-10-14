@@ -39,6 +39,18 @@ export class Form implements Node {
       return new Form(head_, parts_);
     }
 
+    if (attrs(head_).includes(symbol("Flat"))) {
+      let parts2: Expr[] = [];
+      for (const part of parts_) {
+        if (part instanceof Form && part.head instanceof Symbol && part.head.val === head_.val) {
+          parts2 = [...parts2, ...part.parts];
+        } else {
+          parts2 = [...parts2, part];
+        }
+      }
+      parts_ = parts2;
+    }
+
     const fn = builtin(head_);
     if (fn) {
       return fn(parts_);
@@ -46,7 +58,7 @@ export class Form implements Node {
 
     // TODO: check DownValues
 
-    return this;
+    return new Form(head_, parts_);
   };
 
   repr(): string {

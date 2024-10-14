@@ -4,7 +4,7 @@ import uniq from 'lodash/uniq';
 
 const attrsTable: Map<Symbol, Symbol[]> = new Map();
 
-const supported = ['HoldFirst', 'HoldRest', 'HoldAll', 'Protected'];
+const supported = ['HoldFirst', 'HoldRest', 'HoldAll', 'Protected', 'Flat'];
 
 export const attrs = (sym: Symbol) => attrsTable.get(sym) || [];
 export const setAttrs = (sym: Symbol, attrs_: Symbol[]) => {

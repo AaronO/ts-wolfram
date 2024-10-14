@@ -12,10 +12,10 @@ export const populateBuiltins = () => {
   setAttrs(symbol('Attributes'), ["HoldAll", "Protected"].map(symbol));
 
   builtinsTable.set(symbol('Plus'), Plus);
-  setAttrs(symbol('Plus'), ["Protected"].map(symbol));
+  setAttrs(symbol('Plus'), ["Protected", "Flat"].map(symbol));
 
   builtinsTable.set(symbol('Times'), Times);
-  setAttrs(symbol('Times'), ["Protected"].map(symbol));
+  setAttrs(symbol('Times'), ["Protected", "Flat"].map(symbol));
 }
 
 const Attributes = (parts: Expr[]) => {
