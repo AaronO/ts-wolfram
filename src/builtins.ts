@@ -1,6 +1,7 @@
 import { Int, Symbol, Expr, List, Form, Null } from './ast';
 import { symbol } from './symbols';
 import { attrs, setAttrs, clearAttrs } from './attrs';
+import { match } from './rewrite';
 
 type Builtin = (parts: Expr[]) => Expr;
 const builtinsTable: Map<Symbol, Builtin> = new Map();
@@ -24,6 +25,10 @@ export const populateBuiltins = () => {
 
   builtinsTable.set(symbol('Times'), Times);
   setAttrs(symbol('Times'), ["Protected", "Flat"].map(symbol));
+
+  // Term rewriting
+  builtinsTable.set(symbol('MatchQ'), MatchQ);
+  setAttrs(symbol('MatchQ'), ["Protected"].map(symbol));
 }
 
 /*
@@ -135,6 +140,18 @@ const Times = (parts: Expr[]) => {
   } else {
     return new Form(symbol("Times"), acc == 1 ? rest : [new Int(acc), ...rest]);
   }
+}
+
+/*
+  Term rewriting
+*/
+const MatchQ = (parts: Expr[]) => {
+  if (parts.length != 2) {
+    throw errArgCount('MatchQ', 2, parts.length);
+  }
+
+  const [matches] = match(parts[0], parts[1]);
+  return symbol(matches ? "True" : "False");
 }
 
 /*

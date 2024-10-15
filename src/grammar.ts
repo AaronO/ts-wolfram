@@ -1,7 +1,9 @@
 import { Int, Form, Expr, List } from './ast';
 import {
   seq, alpha, many, alnum, int, either, sepBy,
-  binop, binopr, stream, fwd, lex, parser, noop
+  binop, binopr, stream, fwd, lex, parser, not,
+  peek,
+  maybe
 } from '@spakhm/ts-parsec';
 import { symbol } from './symbols';
 
@@ -22,14 +24,14 @@ const term = fwd(() => binop(either('+', '-'), factor, (op, l: Expr, r): Form =>
   return new Form(symbol('Plus'), [l, right]);
 }));
 
-const factor = fwd(() => binop(either('*', '/', noop), exponent, (op, l: Expr, r): Form =>
-  new Form(symbol('Times'), [l, (op == '*' || op == true) ? r : new Form(
+const factor = fwd(() => binop(either('*', '/', peek(not(either('+', '-')))), exponent, (op, l: Expr, r): Form =>
+  new Form(symbol('Times'), [l, (op == '*' || op == null) ? r : new Form(
     symbol('Power'), [r, new Int(-1)])])));
 
 const exponent = fwd(() => binopr(either('^'), primitive, (_, l, r: Expr): Form =>
   new Form(symbol('Power'), [l, r])));
 
-const primitive = fwd(() => either(paren_expr, list_expr, form, atom));
+const primitive = fwd(() => either(paren_expr, list_expr, pattern, blank, form, atom));
 
 const paren_expr = (source: stream) => {
   const p: parser<Expr> = seq('(', expr, ')').map2((_, e) => e);
@@ -41,6 +43,12 @@ const list_expr = (source: stream) => {
     new List(els));
   return res(source);
 }
+
+const pattern = fwd(() => lex(seq(symbol_, blank).map2((s, b) =>
+  new Form(symbol('Pattern'), [s, b]))));
+
+const blank = fwd(() => lex(seq('_', maybe(symbol_)).map2((_, s) =>
+  new Form(symbol('Blank'), s ? [s] : []))));
 
 const atom = fwd(() => either(symbol_, integer));
 
