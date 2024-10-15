@@ -1,7 +1,7 @@
 import { Int, Form, Expr, List } from './ast';
 import {
   seq, alpha, many, alnum, int, either, sepBy,
-  binop, binopr, stream, fwd, lex, parser
+  binop, binopr, stream, fwd, lex, parser, noop
 } from '@spakhm/ts-parsec';
 import { symbol } from './symbols';
 
@@ -22,8 +22,8 @@ const term = fwd(() => binop(either('+', '-'), factor, (op, l: Expr, r): Form =>
   return new Form(symbol('Plus'), [l, right]);
 }));
 
-const factor = fwd(() => binop(either('*', '/'), exponent, (op, l: Expr, r): Form =>
-  new Form(symbol('Times'), [l, op == '*' ? r : new Form(
+const factor = fwd(() => binop(either('*', '/', noop), exponent, (op, l: Expr, r): Form =>
+  new Form(symbol('Times'), [l, (op == '*' || op == true) ? r : new Form(
     symbol('Power'), [r, new Int(-1)])])));
 
 const exponent = fwd(() => binopr(either('^'), primitive, (_, l, r: Expr): Form =>
