@@ -39,8 +39,7 @@ Df[(x + 1)^2, x]
 ```
 
 This has been a really fun and instructive project. Supported features
-(this list is also a reasonably good indicator of the order in which
-the features were implemented):
+are:
 
 - __Literals__: parses integers, symbols, forms, arithmetic operators,
   and lists. Multiplication is parsed correctly (i.e. `a*b` and `a b`
@@ -49,3 +48,6 @@ the features were implemented):
   `Flat`, along with the builtin `Attributes`, `SetAttributes`,
   `ClearAttributes`.
 - __Field operators__: `Plus`, `Times`.
+
+The list above is also a reasonably good indicator of the order in which
+the features were implemented.
