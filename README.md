@@ -46,5 +46,6 @@ the features were implemented):
   and lists. Multiplication is parsed correctly (i.e. `a*b` and `a b`
   both parse as `Times[a,b]`).
 - __Attributes__: `HoldFirst`, `HoldRest`, `HoldAll`, `Protected`,
-  `Flat`, along with the builtin `Attributes`.
+  `Flat`, along with the builtin `Attributes`, `SetAttributes`,
+  `ClearAttributes`.
 - __Field operators__: `Plus`, `Times`.

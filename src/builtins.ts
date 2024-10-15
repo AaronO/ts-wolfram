@@ -1,4 +1,4 @@
-import { Int, Symbol, Expr, List, Form } from './ast';
+import { Int, Symbol, Expr, List, Form, Null } from './ast';
 import { symbol } from './symbols';
 import { attrs, setAttrs } from './attrs';
 
@@ -10,6 +10,9 @@ export const builtin = (sym: Symbol): Builtin | undefined => builtinsTable.get(s
 export const populateBuiltins = () => {
   builtinsTable.set(symbol('Attributes'), Attributes);
   setAttrs(symbol('Attributes'), ["HoldAll", "Protected"].map(symbol));
+
+  builtinsTable.set(symbol('SetAttributes'), SetAttributes);
+  setAttrs(symbol('SetAttributes'), ["HoldFirst", "Protected"].map(symbol));
 
   builtinsTable.set(symbol('Plus'), Plus);
   setAttrs(symbol('Plus'), ["Protected", "Flat"].map(symbol));
@@ -35,6 +38,31 @@ const Attributes = (parts: Expr[]) => {
   }
 
   throw errArgType('Attributes', ['a symbol', 'a list of symbols']);
+}
+
+const SetAttributes = (parts: Expr[]) => {
+  if (parts.length != 2) {
+    throw errArgCount('SetAttributes', 2, parts.length);
+  }
+  let syms = (parts[0] instanceof List ? parts[0].vals : [parts[0]]).map(s => {
+    if (!(s instanceof Symbol)) {
+      throw errArgType('SetAttributes', ['a symbol', 'a list of symbols']);
+    }
+    return s;
+  })
+
+  const attrs = (parts[1] instanceof List ? parts[1].vals : [parts[1]]).map(s => {
+    if (!(s instanceof Symbol)) {
+      throw errArgType('SetAttributes', ['a symbol', 'a list of symbols']);
+    }
+    return s;
+  });
+
+  for (const sym of syms) {
+    setAttrs(sym, attrs);
+  }
+
+  return new Null();
 }
 
 const Plus = (parts: Expr[]) => {

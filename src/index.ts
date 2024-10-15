@@ -2,6 +2,7 @@ import { createInterface, Interface } from 'readline';
 import { expr } from './grammar';
 import { fromString } from '@spakhm/ts-parsec';
 import { populateBuiltins } from './builtins';
+import { Null } from './ast';
 
 function q(rl: Interface, query: string): Promise<string> {
   return new Promise((resolve) => {
@@ -26,7 +27,10 @@ const main = async () => {
     }
     
     try {
-      console.log(parsed.res.eval().repr());
+      const evaled = parsed.res.eval();
+      if (!(evaled instanceof Null)) {
+        console.log(evaled.repr());
+      }
     } catch (err) {
       console.log(err);
     }

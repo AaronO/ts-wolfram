@@ -1,6 +1,5 @@
 import type { Symbol } from './ast';
 import { symbol } from './symbols';
-import uniq from 'lodash/uniq';
 
 type AttrVec = {
   holdFirst: boolean,
@@ -12,6 +11,9 @@ const attrsTable: Map<Symbol, AttrVec> = new Map();
 
 const supported = ['HoldFirst', 'HoldRest', 'HoldAll', 'Protected', 'Flat'];
 
+/*
+  Get attributes
+*/
 export const attrs = (sym: Symbol) => {
   const attrVec = getVec(sym);
   const attrs_: Symbol[] = [];
@@ -26,6 +28,9 @@ export const attrs = (sym: Symbol) => {
   return attrs_;
 }
 
+/*
+  Set attributes
+*/
 export const setAttrs = (sym: Symbol, attrs_: Symbol[]) => {
   for(const attr of attrs_) {
     validate(attr);
@@ -45,6 +50,9 @@ export const setAttrs = (sym: Symbol, attrs_: Symbol[]) => {
   attrsTable.set(sym, attrVec);
 }
 
+/*
+  Utils
+*/
 const validate = (sym: Symbol) => {
   if (!supported.map(symbol).includes(sym)) {
     throw `${sym.val} is not a known attribute.`;
