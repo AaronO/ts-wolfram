@@ -1,6 +1,6 @@
 import { Int, Symbol, Expr, List, Form, Null } from './ast';
 import { symbol } from './symbols';
-import { attrs, setAttrs } from './attrs';
+import { attrs, setAttrs, clearAttrs } from './attrs';
 
 type Builtin = (parts: Expr[]) => Expr;
 const builtinsTable: Map<Symbol, Builtin> = new Map();
@@ -8,12 +8,17 @@ const builtinsTable: Map<Symbol, Builtin> = new Map();
 export const builtin = (sym: Symbol): Builtin | undefined => builtinsTable.get(sym);
 
 export const populateBuiltins = () => {
+  // attributes
   builtinsTable.set(symbol('Attributes'), Attributes);
   setAttrs(symbol('Attributes'), ["HoldAll", "Protected"].map(symbol));
 
   builtinsTable.set(symbol('SetAttributes'), SetAttributes);
   setAttrs(symbol('SetAttributes'), ["HoldFirst", "Protected"].map(symbol));
 
+  builtinsTable.set(symbol('ClearAttributes'), ClearAttributes);
+  setAttrs(symbol('ClearAttributes'), ["HoldFirst", "Protected"].map(symbol));
+
+  // field operations
   builtinsTable.set(symbol('Plus'), Plus);
   setAttrs(symbol('Plus'), ["Protected", "Flat"].map(symbol));
 
@@ -21,6 +26,9 @@ export const populateBuiltins = () => {
   setAttrs(symbol('Times'), ["Protected", "Flat"].map(symbol));
 }
 
+/*
+  Attributes
+*/
 const Attributes = (parts: Expr[]) => {
   if (parts.length != 1) {
     throw errArgCount('Attributes', 1, parts.length);
@@ -65,6 +73,34 @@ const SetAttributes = (parts: Expr[]) => {
   return new Null();
 }
 
+const ClearAttributes = (parts: Expr[]) => {
+  if (parts.length != 2) {
+    throw errArgCount('ClearAttributes', 2, parts.length);
+  }
+  let syms = (parts[0] instanceof List ? parts[0].vals : [parts[0]]).map(s => {
+    if (!(s instanceof Symbol)) {
+      throw errArgType('ClearAttributes', ['a symbol', 'a list of symbols']);
+    }
+    return s;
+  })
+
+  const attrs = (parts[1] instanceof List ? parts[1].vals : [parts[1]]).map(s => {
+    if (!(s instanceof Symbol)) {
+      throw errArgType('ClearAttributes', ['a symbol', 'a list of symbols']);
+    }
+    return s;
+  });
+
+  for (const sym of syms) {
+    clearAttrs(sym, attrs);
+  }
+
+  return new Null();
+}
+
+/*
+  Field operations
+*/
 const Plus = (parts: Expr[]) => {
   let acc: number = 0;
   let rest: Expr[] = [];
@@ -101,6 +137,9 @@ const Times = (parts: Expr[]) => {
   }
 }
 
+/*
+  Error msg utils
+*/
 const errArgCount = (fnname: string, expected: number, actual: number) =>
   `${fnname} called with ${actual} arguments; ${expected} argument is expected.`;
 

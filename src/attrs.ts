@@ -51,6 +51,29 @@ export const setAttrs = (sym: Symbol, attrs_: Symbol[]) => {
 }
 
 /*
+  Clear attributes
+*/
+export const clearAttrs = (sym: Symbol, attrs_: Symbol[]) => {
+  for(const attr of attrs_) {
+    validate(attr);
+  }
+
+  const attrVec = getVec(sym);
+  for (const attr of attrs_) {
+    if (attr.val == 'HoldFirst') { attrVec.holdFirst = false; }
+    if (attr.val == 'HoldRest') { attrVec.holdRest = false; }
+    if (attr.val == 'HoldAll') {
+      attrVec.holdFirst = false;
+      attrVec.holdRest = false;
+    }
+    if (attr.val == 'Protected') { attrVec.protected = false; }
+    if (attr.val == 'Flat') { attrVec.flat = false; }
+  }
+  attrsTable.set(sym, attrVec);
+}
+
+
+/*
   Utils
 */
 const validate = (sym: Symbol) => {
