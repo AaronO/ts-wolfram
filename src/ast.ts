@@ -51,14 +51,15 @@ export class Form implements Node {
       parts_ = parts2;
     }
 
+    const evaled = new Form(head_, parts_);
     const fn = builtin(head_);
     if (fn) {
-      return fn(parts_);
+      return fn(parts_, evaled);
     }
 
     // TODO: check DownValues
 
-    return new Form(head_, parts_);
+    return evaled;
   };
 
   repr(): string {

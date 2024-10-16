@@ -9,7 +9,6 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
   // Treat `HoldPattern` specially
   if (p instanceof Form && p.head instanceof Symbol && p.head.val == 'HoldPattern') {
     p = p.parts[0];
-    // TODO: add HoldPattern, Blank, Pattern to builtins, check arg count, set attrs
   }
 
   // match patterns first

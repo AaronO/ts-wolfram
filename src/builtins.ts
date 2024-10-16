@@ -4,7 +4,7 @@ import { attrs, setAttrs, clearAttrs } from './attrs';
 import { match } from './rewrite';
 import { list, isList } from './list';
 
-type Builtin = (parts: Expr[]) => Expr;
+type Builtin = (parts: Expr[], self: Expr) => Expr;
 const builtinsTable: Map<Symbol, Builtin> = new Map();
 
 export const builtin = (sym: Symbol): Builtin | undefined => builtinsTable.get(sym);
@@ -33,9 +33,32 @@ export const populateBuiltins = () => {
   builtinsTable.set(symbol('Head'), Head);
   setAttrs(symbol('Head'), ["Protected"].map(symbol));
 
-  // Term rewriting
+  // Pattern matching
   builtinsTable.set(symbol('MatchQ'), MatchQ);
   setAttrs(symbol('MatchQ'), ["Protected"].map(symbol));
+
+  builtinsTable.set(symbol('HoldPattern'), HoldPattern);
+  setAttrs(symbol('HoldPattern'), ["HoldAll", "Protected"].map(symbol));
+
+  builtinsTable.set(symbol('Pattern'), Pattern);
+  setAttrs(symbol('Pattern'), ["HoldFirst", "Protected"].map(symbol));
+
+  builtinsTable.set(symbol('Blank'), Blank);
+  setAttrs(symbol('Blank'), ["Protected"].map(symbol));
+
+  // Term rewriting
+  builtinsTable.set(symbol('ReplaceAll'), ReplaceAll);
+  setAttrs(symbol('ReplaceAll'), ["Protected"].map(symbol));
+
+  builtinsTable.set(symbol('RuleDelayed'), RuleDelayed);
+  setAttrs(symbol('RuleDelayed'), ["HoldRest", "Protected"].map(symbol));
+
+  // Values (Own, Down)
+  builtinsTable.set(symbol('Set'), Set_);
+  setAttrs(symbol('Set'), ["HoldFirst", "Protected"].map(symbol));
+
+  builtinsTable.set(symbol('SetDelayed'), SetDelayed);
+  setAttrs(symbol('SetDelayed'), ["HoldAll", "Protected"].map(symbol));
 }
 
 /*
@@ -170,7 +193,7 @@ export const Head = (parts: Expr[]) => {
 }
 
 /*
-  Term rewriting
+  Pattern matching
 */
 const MatchQ = (parts: Expr[]) => {
   if (parts.length != 2) {
@@ -190,10 +213,59 @@ const MatchQ = (parts: Expr[]) => {
   return symbol("True");
 }
 
+const HoldPattern = (parts: Expr[], self: Expr) => {
+  if (parts.length != 1) {
+    throw errArgCount('HoldPattern', 1, parts.length);
+  }
+
+  return self;
+}
+
+const Pattern = (parts: Expr[], self: Expr) => {
+  if (parts.length != 2) {
+    throw errArgCount('Pattern', 2, parts.length);
+  }
+
+  return self;
+}
+
+const Blank = (parts: Expr[], self: Expr) => {
+  if (parts.length > 1) {
+    throw errArgCount('Blank', "0 - 1", parts.length);
+  }
+  if (parts.length == 1 && !(parts[0] instanceof Symbol)) {
+    throw errArgType('Blank', ['a symbol']);
+  }
+
+  return self;
+}
+
+/*
+  Term rewriting
+*/
+const ReplaceAll = (parts: Expr[]) => {
+  throw "TODO;"
+}
+
+const RuleDelayed = (parts: Expr[]) => {
+  throw "TODO;"
+}
+
+/*
+  Values
+*/
+const Set_ = (parts: Expr[]) => {
+  throw "TODO;"
+}
+
+const SetDelayed = (parts: Expr[]) => {
+  throw "TODO;"
+}
+
 /*
   Error msg utils
 */
-const errArgCount = (fnname: string, expected: number, actual: number) =>
+const errArgCount = (fnname: string, expected: number | string, actual: number) =>
   `${fnname} called with ${actual} arguments; ${expected} argument is expected.`;
 
 const errArgType = (fnname: string, types: string[]) =>
