@@ -18,8 +18,8 @@ export const expr = fwd(() => replace);
 const replace = fwd(() => binop('/.', rule, (_, l: Expr, r): Form =>
   new Form(symbol('ReplaceAll'), [l, r])));
 
-const rule = fwd(() => binopr(':>', assignment, (_, l, r: Expr): Form =>
-  new Form(symbol('RuleDelayed'), [l, r])));
+const rule = fwd(() => binopr(either('->', ':>'), assignment, (op, l, r: Expr): Form =>
+  new Form(symbol(op == '->' ? 'Rule' : 'RuleDelayed'), [l, r])));
 
 const assignment = fwd(() => binopr(either('=', ':='), term, (op, l, r: Expr): Form =>
   new Form(symbol(op == '=' ? 'Set' : 'SetDelayed'), [l, r])));

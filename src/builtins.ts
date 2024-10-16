@@ -53,6 +53,9 @@ export const populateBuiltins = () => {
   builtinsTable.set(symbol('ReplaceAll'), ReplaceAll);
   setAttrs(symbol('ReplaceAll'), ["Protected"].map(symbol));
 
+  builtinsTable.set(symbol('Rule'), Rule);
+  setAttrs(symbol('Rule'), ["Protected"].map(symbol));
+
   builtinsTable.set(symbol('RuleDelayed'), RuleDelayed);
   setAttrs(symbol('RuleDelayed'), ["HoldRest", "Protected"].map(symbol));
 
@@ -281,6 +284,13 @@ const ReplaceAll = (parts: Expr[]) => {
     if (!isRule(rule)) { throw "Replace expects a rule or a list of rules."; }
     return [rule.parts[0], rule.parts[1]];
   }));
+}
+
+const Rule = (parts: Expr[], self: Expr) => {
+  if (parts.length != 2) {
+    throw errArgCount('Rule', 2, parts.length);
+  }
+  return self;
 }
 
 const RuleDelayed = (parts: Expr[], self: Expr) => {
