@@ -1,4 +1,4 @@
-import { Int, Symbol, Expr, Form, Null } from './ast';
+import { Int, Symbol, Expr, Form } from './ast';
 import { symbol } from './symbols';
 import { attrs, setAttrs, clearAttrs } from './attrs';
 import { match } from './rewrite';
@@ -10,6 +10,8 @@ const builtinsTable: Map<Symbol, Builtin> = new Map();
 export const builtin = (sym: Symbol): Builtin | undefined => builtinsTable.get(sym);
 
 export const populateBuiltins = () => {
+  setAttrs(symbol('Null'), ["Protected"].map(symbol));
+
   // attributes
   builtinsTable.set(symbol('Attributes'), Attributes);
   setAttrs(symbol('Attributes'), ["HoldAll", "Protected"].map(symbol));
@@ -80,7 +82,7 @@ const SetAttributes = (parts: Expr[]) => {
     setAttrs(sym, attrs);
   }
 
-  return new Null();
+  return symbol('Null');
 }
 
 const ClearAttributes = (parts: Expr[]) => {
@@ -105,7 +107,7 @@ const ClearAttributes = (parts: Expr[]) => {
     clearAttrs(sym, attrs);
   }
 
-  return new Null();
+  return symbol('Null');
 }
 
 /*
@@ -159,8 +161,6 @@ const Head = (parts: Expr[]) => {
   if (e instanceof Int) {
     return symbol("Integer");
   } else if (e instanceof Symbol) {
-    return symbol("Symbol");
-  } else if (e instanceof Null) {
     return symbol("Symbol");
   } else if (e instanceof Form) {
     return e.head;

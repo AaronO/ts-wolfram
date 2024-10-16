@@ -1,4 +1,4 @@
-import { Form, Expr, Symbol, Int, Null } from "./ast"
+import { Form, Expr, Symbol, Int } from "./ast"
 import { isList } from "./list";
 
 export type Env = Map<Symbol, Expr>;
@@ -15,8 +15,6 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
     return [p.val == e.val, env];
   } else if (e instanceof Symbol && p instanceof Symbol) {
     return [p == e, env];
-  } else if (e instanceof Null && p instanceof Null) {
-    return [true, env];
   } else if (isList(e) && isList(p)) {
     if (e.parts.length != p.parts.length) { return [false, env]; }
     for(let i = 0; i<e.parts.length; i++) {

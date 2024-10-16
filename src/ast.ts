@@ -2,7 +2,7 @@ import { attrs } from './attrs';
 import { symbol } from './symbols';
 import { builtin } from './builtins';
 
-export type Expr = Form | Symbol | Int | Null;
+export type Expr = Form | Symbol | Int;
 
 export interface Node {
   eval: () => Expr,
@@ -86,16 +86,5 @@ export class Int implements Node {
 
   repr (): string {
     return this.val.toString();
-  }
-}
-
-export class Null implements Node {
-  constructor() {}
-  eval(): Expr {
-    return this;
-  }
-
-  repr (): string {
-    return "Null";
   }
 }

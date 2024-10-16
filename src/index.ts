@@ -2,7 +2,7 @@ import { createInterface, Interface } from 'readline';
 import { expr } from './grammar';
 import { fromString } from '@spakhm/ts-parsec';
 import { populateBuiltins } from './builtins';
-import { Null } from './ast';
+import { symbol } from './symbols';
 
 function q(rl: Interface, query: string): Promise<string> {
   return new Promise((resolve) => {
@@ -28,7 +28,7 @@ const main = async () => {
     
     try {
       const evaled = parsed.res.eval();
-      if (!(evaled instanceof Null)) {
+      if (evaled != symbol('Null')) {
         console.log(evaled.repr());
       }
     } catch (err) {
