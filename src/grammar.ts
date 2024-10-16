@@ -10,11 +10,17 @@ import { list } from './list';
 /*
   Grammar entry point.
 */
-export const expr = fwd(() => assignment);
+export const expr = fwd(() => replace);
 
 /*
-  Operators: assignments, terms, factors, exponents
+  Operators: replace, rule, assignments, terms, factors, exponents
 */
+const replace = fwd(() => binop('/.', rule, (_, l: Expr, r): Form =>
+  new Form(symbol('ReplaceAll'), [l, r])));
+
+const rule = fwd(() => binopr(':>', assignment, (_, l, r: Expr): Form =>
+  new Form(symbol('RuleDelayed'), [l, r])));
+
 const assignment = fwd(() => binopr(either('=', ':='), term, (op, l, r: Expr): Form =>
   new Form(symbol(op == '=' ? 'Set' : 'SetDelayed'), [l, r])));
 
