@@ -1,4 +1,5 @@
 import { Form, Expr, Symbol, Int } from "./ast"
+import { Head } from "./builtins";
 
 export type Env = Map<Symbol, Expr>;
 
@@ -13,7 +14,7 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
 
   // match patterns first
   if (isBlank(p)) {
-    return [true, env];
+    return [matchBlank(e, p), env];
   }
 
   // The rest is essentially deepEqual
@@ -44,3 +45,15 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
 
 const isBlank = (e: Expr): e is Form =>
   e instanceof Form && e.head instanceof Symbol && e.head.val == 'Blank';
+
+const matchBlank = (e: Expr, p: Form) => {
+  if (!(p.head instanceof Symbol && p.head.val == 'Blank')) {
+    return false;
+  }
+
+  if (p.parts.length == 0) {
+    return true;
+  }
+
+  return Head([e]) == p.parts[0];
+}

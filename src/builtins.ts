@@ -152,7 +152,7 @@ const Times = (parts: Expr[]) => {
 /*
   Form manipulation
 */
-const Head = (parts: Expr[]) => {
+export const Head = (parts: Expr[]) => {
   if (parts.length != 1) {
     throw errArgCount('Head', 1, parts.length);
   }
