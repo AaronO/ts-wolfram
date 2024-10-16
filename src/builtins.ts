@@ -1,7 +1,8 @@
-import { Int, Symbol, Expr, List, Form, Null } from './ast';
+import { Int, Symbol, Expr, Form, Null } from './ast';
 import { symbol } from './symbols';
 import { attrs, setAttrs, clearAttrs } from './attrs';
 import { match } from './rewrite';
+import { list, isList } from './list';
 
 type Builtin = (parts: Expr[]) => Expr;
 const builtinsTable: Map<Symbol, Builtin> = new Map();
@@ -26,6 +27,10 @@ export const populateBuiltins = () => {
   builtinsTable.set(symbol('Times'), Times);
   setAttrs(symbol('Times'), ["Protected", "Flat"].map(symbol));
 
+  // form manipulation
+  builtinsTable.set(symbol('Head'), Head);
+  setAttrs(symbol('Head'), ["Protected"].map(symbol));
+
   // Term rewriting
   builtinsTable.set(symbol('MatchQ'), MatchQ);
   setAttrs(symbol('MatchQ'), ["Protected"].map(symbol));
@@ -40,11 +45,11 @@ const Attributes = (parts: Expr[]) => {
   }
 
   if (parts[0] instanceof Symbol) {
-    return new List(attrs(parts[0]));
-  } else if (parts[0] instanceof List) {
-    return new List(parts[0].vals.map(x => {
+    return list(attrs(parts[0]));
+  } else if (isList(parts[0])) {
+    return list(parts[0].parts.map(x => {
       if (x instanceof Symbol) {
-        return new List(attrs(x));
+        return list(attrs(x));
       }
       throw errArgType('Attributes', ['a symbol', 'a list of symbols']);
     }));
@@ -57,14 +62,14 @@ const SetAttributes = (parts: Expr[]) => {
   if (parts.length != 2) {
     throw errArgCount('SetAttributes', 2, parts.length);
   }
-  let syms = (parts[0] instanceof List ? parts[0].vals : [parts[0]]).map(s => {
+  let syms = (isList(parts[0]) ? parts[0].parts : [parts[0]]).map(s => {
     if (!(s instanceof Symbol)) {
       throw errArgType('SetAttributes', ['a symbol', 'a list of symbols']);
     }
     return s;
   })
 
-  const attrs = (parts[1] instanceof List ? parts[1].vals : [parts[1]]).map(s => {
+  const attrs = (isList(parts[1]) ? parts[1].parts : [parts[1]]).map(s => {
     if (!(s instanceof Symbol)) {
       throw errArgType('SetAttributes', ['a symbol', 'a list of symbols']);
     }
@@ -82,14 +87,14 @@ const ClearAttributes = (parts: Expr[]) => {
   if (parts.length != 2) {
     throw errArgCount('ClearAttributes', 2, parts.length);
   }
-  let syms = (parts[0] instanceof List ? parts[0].vals : [parts[0]]).map(s => {
+  let syms = (isList(parts[0]) ? parts[0].parts : [parts[0]]).map(s => {
     if (!(s instanceof Symbol)) {
       throw errArgType('ClearAttributes', ['a symbol', 'a list of symbols']);
     }
     return s;
   })
 
-  const attrs = (parts[1] instanceof List ? parts[1].vals : [parts[1]]).map(s => {
+  const attrs = (isList(parts[1]) ? parts[1].parts : [parts[1]]).map(s => {
     if (!(s instanceof Symbol)) {
       throw errArgType('ClearAttributes', ['a symbol', 'a list of symbols']);
     }
@@ -140,6 +145,28 @@ const Times = (parts: Expr[]) => {
   } else {
     return new Form(symbol("Times"), acc == 1 ? rest : [new Int(acc), ...rest]);
   }
+}
+
+/*
+  Form manipulation
+*/
+const Head = (parts: Expr[]) => {
+  if (parts.length != 1) {
+    throw errArgCount('Head', 1, parts.length);
+  }
+
+  const e = parts[0];
+  if (e instanceof Int) {
+    return symbol("Integer");
+  } else if (e instanceof Symbol) {
+    return symbol("Symbol");
+  } else if (e instanceof Null) {
+    return symbol("Symbol");
+  } else if (e instanceof Form) {
+    return e.head;
+  }
+
+  throw "ThisShouldNeverHappenException:)"
 }
 
 /*

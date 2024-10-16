@@ -1,14 +1,20 @@
-import { Int, Form, Expr, List } from './ast';
+import { Int, Form, Expr } from './ast';
 import {
   seq, alpha, many, alnum, int, either, sepBy,
   binop, binopr, stream, fwd, lex, parser, not,
-  peek,
-  maybe
+  peek, maybe, some
 } from '@spakhm/ts-parsec';
 import { symbol } from './symbols';
+import { list } from './list';
 
+/*
+  Grammar entry point.
+*/
 export const expr = fwd(() => assignment);
 
+/*
+  Operators: assignments, terms, factors, exponents
+*/
 const assignment = fwd(() => binopr(either('=', ':='), term, (op, l, r: Expr): Form =>
   new Form(symbol(op == '=' ? 'Set' : 'SetDelayed'), [l, r])));
 
@@ -28,10 +34,30 @@ const factor = fwd(() => binop(either('*', '/', peek(not(either('+', '-')))), ex
   new Form(symbol('Times'), [l, (op == '*' || op == null) ? r : new Form(
     symbol('Power'), [r, new Int(-1)])])));
 
-const exponent = fwd(() => binopr(either('^'), primitive, (_, l, r: Expr): Form =>
+const exponent = fwd(() => binopr(either('^'), literal, (_, l, r: Expr): Form =>
   new Form(symbol('Power'), [l, r])));
 
-const primitive = fwd(() => either(paren_expr, list_expr, pattern, blank, form, atom));
+/*
+  Literals (forms & non-forms)
+*/
+const literal = fwd(() => either(form, nonFormLiteral));
+
+/*
+  Forms
+*/
+const form = fwd(() => seq(nonFormLiteral, some(formTail)).map2<Form>((head, tails) =>
+  tails.slice(1).reduce((acc, tail) =>
+    new Form(acc, tail), new Form(head, tails[0]))));
+
+const formTail = (source: stream) => {
+  const p: parser<Expr[]> = seq('[', sepBy(expr, ','), ']').map2((_, parts) => parts);
+  return p(source);
+}
+
+/*
+  Non-forms: (expr), lists, patterns, blanks, symbols, integers
+*/
+const nonFormLiteral = fwd(() => either(paren_expr, list_expr, pattern, blank, symbol_, integer));
 
 const paren_expr = (source: stream) => {
   const p: parser<Expr> = seq('(', expr, ')').map2((_, e) => e);
@@ -39,8 +65,7 @@ const paren_expr = (source: stream) => {
 }
 
 const list_expr = (source: stream) => {
-  const res: parser<List> = seq('{', sepBy(expr, ','), '}').map2<List>((_, els) =>
-    new List(els));
+  const res: parser<Form> = seq('{', sepBy(expr, ','), '}').map2<Form>((_, els) => list(els));
   return res(source);
 }
 
@@ -49,14 +74,6 @@ const pattern = fwd(() => lex(seq(symbol_, blank).map2((s, b) =>
 
 const blank = fwd(() => lex(seq('_', maybe(symbol_)).map2((_, s) =>
   new Form(symbol('Blank'), s ? [s] : []))));
-
-const atom = fwd(() => either(symbol_, integer));
-
-const form = (source: stream) => {
-  const res: parser<Form> = seq(atom, '[', sepBy(expr, ','), ']').map2<Form>((head, _, parts) =>
-    new Form(head, parts));
-  return res(source);
-}
 
 const symbol_ = lex(seq(alpha, many(alnum)).map2((ft, rt) =>
   symbol([ft, ...rt].join(""))));
