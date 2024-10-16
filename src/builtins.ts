@@ -1,7 +1,7 @@
 import { Int, Symbol, Expr, Form } from './ast';
 import { symbol } from './symbols';
 import { attrs, setAttrs, clearAttrs } from './attrs';
-import { match, replace } from './rewrite';
+import { match, replace, replaceAll } from './rewrite';
 import { list, isList } from './list';
 
 type Builtin = (parts: Expr[], self: Expr) => Expr;
@@ -246,6 +246,11 @@ const Blank = (parts: Expr[], self: Expr) => {
 /*
   Term rewriting
 */
+const isRule = (e: Expr): e is Form =>
+  e instanceof Form
+  && e.head instanceof Symbol
+  && ["Rule", "RuleDelayed"].includes(e.head.val);
+
 const Replace = (parts: Expr[]) => {
   if (parts.length != 2) {
     throw errArgCount('Replace', 2, parts.length);
@@ -253,21 +258,29 @@ const Replace = (parts: Expr[]) => {
 
   const expr = parts[0];
   const rules = isList(parts[1]) ? parts[1].parts : [parts[1]];
-  const res = rules.map(rule => {
-    if (!(rule instanceof Form)
-      || !(rule.head instanceof Symbol)
-      || !(["Rule", "RuleDelayed"].includes(rule.head.val)))
-    {
-      throw "Replace expects a rule."
-    }
-    return replace(expr, rule.parts[0], rule.parts[1]);
-  })
+  const [replacedp, res] = replace(expr, rules.map(rule => {
+    if (!isRule(rule)) { throw "Replace expects a rule or a list of rules."; }
+    return [rule.parts[0], rule.parts[1]];
+  }));
 
-  return res.length == 1 ? res[0] : list(res);
+  if (replacedp) {
+    return res;
+  }
+
+  return expr;
 }
 
 const ReplaceAll = (parts: Expr[]) => {
-  throw "TODO;"
+  if (parts.length != 2) {
+    throw errArgCount('ReplaceAll', 2, parts.length);
+  }
+
+  const expr = parts[0];
+  const rules = isList(parts[1]) ? parts[1].parts : [parts[1]];
+  return replaceAll(expr, rules.map(rule => {
+    if (!isRule(rule)) { throw "Replace expects a rule or a list of rules."; }
+    return [rule.parts[0], rule.parts[1]];
+  }));
 }
 
 const RuleDelayed = (parts: Expr[], self: Expr) => {

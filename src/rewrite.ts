@@ -97,11 +97,26 @@ const mergeEnv = (env1: Env, env2: Env): [boolean, Env] => {
   return [true, env];
 }
 
-export const replace = (expr: Expr, lhs: Expr, rhs: Expr) => {
-  const [matchesp, env] = match(expr, lhs);
-  if (!matchesp) {
-    return expr;
+export const replace = (expr: Expr, rules: [Expr, Expr][]): [boolean, Expr] => {
+  for (const [lhs, rhs] of rules) {
+    const [matchesp, env] = match(expr, lhs);
+    if (matchesp) {
+      return [true, rhs.eval(env)];
+    }
   }
 
-  return rhs.eval(env);
+  return [false, expr];
+}
+
+export const replaceAll = (expr: Expr,  rules: [Expr, Expr][]): Expr => {
+  // try the whole expression first
+  const [replacedp, res] = replace(expr, rules);
+  if (replacedp || !(expr instanceof Form)) {
+    return res;
+  }
+
+  return new Form(
+    replaceAll(expr.head, rules),
+    expr.parts.map(part => replaceAll(part, rules)),
+  );
 }
