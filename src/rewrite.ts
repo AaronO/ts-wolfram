@@ -32,11 +32,11 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
   if (e instanceof Form && p instanceof Form) {
     if (e.parts.length != p.parts.length) { return [false, env]; }
     
-    const [matches, _env] = match(e.head, p.head);
-    if (!matches) { return [false, env]; }
-    
-    for(let i = 0; i<e.parts.length; i++) {
-      let [matchesp, env_] = match(e.parts[i], p.parts[i]);
+    const eparts = [e.head, ...e.parts];
+    const pparts = [p.head, ...p.parts];
+
+    for(let i = 0; i<eparts.length; i++) {
+      let [matchesp, env_] = match(eparts[i], pparts[i]);
       if (!matchesp) { return [false, env]; }
 
       [matchesp, env] = mergeEnv(env, env_);

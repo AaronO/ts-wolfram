@@ -177,8 +177,17 @@ const MatchQ = (parts: Expr[]) => {
     throw errArgCount('MatchQ', 2, parts.length);
   }
 
-  const [matches] = match(parts[0], parts[1]);
-  return symbol(matches ? "True" : "False");
+  const [matches, env] = match(parts[0], parts[1]);
+  if (!matches) {
+    return symbol("False");
+  }
+
+  // Uncomment to debug environment
+  for (const k of Array.from(env.keys())) {
+    //console.log(`${k.repr()} -> ${env.get(k)!.repr()}`);
+  }
+
+  return symbol("True");
 }
 
 /*
