@@ -1,7 +1,7 @@
 import { Int, Symbol, Expr, Form } from './ast';
 import { symbol } from './symbols';
 import { attrs, setAttrs, clearAttrs } from './attrs';
-import { match, replace, replaceAll } from './rewrite';
+import { match, replace, replaceAll, replaceRepeated } from './rewrite';
 import { list, isList } from './list';
 
 type Builtin = (parts: Expr[], self: Expr) => Expr;
@@ -52,6 +52,9 @@ export const populateBuiltins = () => {
 
   builtinsTable.set(symbol('ReplaceAll'), ReplaceAll);
   setAttrs(symbol('ReplaceAll'), ["Protected"].map(symbol));
+
+  builtinsTable.set(symbol('ReplaceRepeated'), ReplaceRepeated);
+  setAttrs(symbol('ReplaceRepeated'), ["Protected"].map(symbol));
 
   builtinsTable.set(symbol('Rule'), Rule);
   setAttrs(symbol('Rule'), ["Protected"].map(symbol));
@@ -281,7 +284,20 @@ const ReplaceAll = (parts: Expr[]) => {
   const expr = parts[0];
   const rules = isList(parts[1]) ? parts[1].parts : [parts[1]];
   return replaceAll(expr, rules.map(rule => {
-    if (!isRule(rule)) { throw "Replace expects a rule or a list of rules."; }
+    if (!isRule(rule)) { throw "ReplaceAll expects a rule or a list of rules."; }
+    return [rule.parts[0], rule.parts[1]];
+  }));
+}
+
+const ReplaceRepeated = (parts: Expr[]) => {
+  if (parts.length != 2) {
+    throw errArgCount('ReplaceRepeated', 2, parts.length);
+  }
+
+  const expr = parts[0];
+  const rules = isList(parts[1]) ? parts[1].parts : [parts[1]];
+  return replaceRepeated(expr, rules.map(rule => {
+    if (!isRule(rule)) { throw "ReplaceRepeated expects a rule or a list of rules."; }
     return [rule.parts[0], rule.parts[1]];
   }));
 }

@@ -120,3 +120,20 @@ export const replaceAll = (expr: Expr,  rules: [Expr, Expr][]): Expr => {
     expr.parts.map(part => replaceAll(part, rules)),
   );
 }
+
+export const replaceRepeated = (expr: Expr,  rules: [Expr, Expr][]): Expr => {
+  let i = 0;
+  while (true) {
+    const expr_ = replaceAll(expr, rules);
+    const [matchesp] = match(expr, expr_);
+    if (matchesp) {
+      return expr;
+    } else {
+      expr = expr_;
+      i++;
+    }
+    if (i > 1000) {
+      throw "Infinite recursion";
+    }
+  }
+}

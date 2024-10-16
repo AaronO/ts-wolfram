@@ -15,8 +15,8 @@ export const expr = fwd(() => replace);
 /*
   Operators: replace, rule, assignments, terms, factors, exponents
 */
-const replace = fwd(() => binop('/.', rule, (_, l: Expr, r): Form =>
-  new Form(symbol('ReplaceAll'), [l, r])));
+const replace = fwd(() => binop(either('/.', '//.'), rule, (op, l: Expr, r): Form =>
+  new Form(symbol(op == '/.' ? 'ReplaceAll' : 'ReplaceRepeated'), [l, r])));
 
 const rule = fwd(() => binopr(either('->', ':>'), assignment, (op, l, r: Expr): Form =>
   new Form(symbol(op == '->' ? 'Rule' : 'RuleDelayed'), [l, r])));
