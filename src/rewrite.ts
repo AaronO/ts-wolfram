@@ -96,3 +96,12 @@ const mergeEnv = (env1: Env, env2: Env): [boolean, Env] => {
 
   return [true, env];
 }
+
+export const replace = (expr: Expr, lhs: Expr, rhs: Expr) => {
+  const [matchesp, env] = match(expr, lhs);
+  if (!matchesp) {
+    return expr;
+  }
+
+  return rhs.eval(env);
+}

@@ -18,6 +18,7 @@ const main = async () => {
     output: process.stdout,
   });
 
+  const emptyEnv = new Map();
   while (true) {
     const a = await q(rl, '> ');
     const parsed = expr(fromString(a));
@@ -27,7 +28,7 @@ const main = async () => {
     }
     
     try {
-      const evaled = parsed.res.eval();
+      const evaled = parsed.res.eval(emptyEnv);
       if (evaled != symbol('Null')) {
         console.log(evaled.repr());
       }

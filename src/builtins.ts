@@ -1,7 +1,7 @@
 import { Int, Symbol, Expr, Form } from './ast';
 import { symbol } from './symbols';
 import { attrs, setAttrs, clearAttrs } from './attrs';
-import { match } from './rewrite';
+import { match, replace } from './rewrite';
 import { list, isList } from './list';
 
 type Builtin = (parts: Expr[], self: Expr) => Expr;
@@ -47,6 +47,9 @@ export const populateBuiltins = () => {
   setAttrs(symbol('Blank'), ["Protected"].map(symbol));
 
   // Term rewriting
+  builtinsTable.set(symbol('Replace'), Replace);
+  setAttrs(symbol('Replace'), ["Protected"].map(symbol));
+
   builtinsTable.set(symbol('ReplaceAll'), ReplaceAll);
   setAttrs(symbol('ReplaceAll'), ["Protected"].map(symbol));
 
@@ -243,12 +246,35 @@ const Blank = (parts: Expr[], self: Expr) => {
 /*
   Term rewriting
 */
+const Replace = (parts: Expr[]) => {
+  if (parts.length != 2) {
+    throw errArgCount('Replace', 2, parts.length);
+  }
+
+  const expr = parts[0];
+  const rules = isList(parts[1]) ? parts[1].parts : [parts[1]];
+  const res = rules.map(rule => {
+    if (!(rule instanceof Form)
+      || !(rule.head instanceof Symbol)
+      || !(["Rule", "RuleDelayed"].includes(rule.head.val)))
+    {
+      throw "Replace expects a rule."
+    }
+    return replace(expr, rule.parts[0], rule.parts[1]);
+  })
+
+  return res.length == 1 ? res[0] : list(res);
+}
+
 const ReplaceAll = (parts: Expr[]) => {
   throw "TODO;"
 }
 
-const RuleDelayed = (parts: Expr[]) => {
-  throw "TODO;"
+const RuleDelayed = (parts: Expr[], self: Expr) => {
+  if (parts.length != 2) {
+    throw errArgCount('RuleDelayed', 2, parts.length);
+  }
+  return self;
 }
 
 /*

@@ -1,11 +1,12 @@
 import { attrs } from './attrs';
 import { symbol } from './symbols';
 import { builtin } from './builtins';
+import type { Env } from './rewrite';
 
 export type Expr = Form | Symbol | Int;
 
 export interface Node {
-  eval: () => Expr,
+  eval: (localEnv: Env) => Expr,
   repr: () => string,
 }
 
@@ -15,24 +16,24 @@ export class Form implements Node {
     public parts: Expr[],
   ) {}
 
-  eval(): Expr {
-    const head_ = this.head.eval();
+  eval(localEnv: Env): Expr {
+    const head_ = this.head.eval(localEnv);
     
     let parts_: Expr[];
     if (head_ instanceof Symbol && this.parts.length > 0) {
       const first =
         (attrs(head_).includes(symbol("HoldFirst"))
         || attrs(head_).includes(symbol("HoldAll")))
-          ? this.parts[0] : this.parts[0].eval();
+          ? this.parts[0] : this.parts[0].eval(localEnv);
 
       const rest =
         (attrs(head_).includes(symbol("HoldRest"))
         || attrs(head_).includes(symbol("HoldAll")))
-          ? this.parts.slice(1) : this.parts.slice(1).map(el => el.eval());
+          ? this.parts.slice(1) : this.parts.slice(1).map(el => el.eval(localEnv));
 
       parts_ = [first, ...rest];
     } else {
-      parts_ = this.parts.map(el => el.eval());
+      parts_ = this.parts.map(el => el.eval(localEnv));
     }
 
     if (!(head_ instanceof Symbol)) {
@@ -69,7 +70,11 @@ export class Form implements Node {
 
 export class Symbol implements Node {
   constructor(public val: string) {}
-  eval (): Expr {
+  eval (localEnv: Env): Expr {
+    if (localEnv.has(this)) {
+      return localEnv.get(this)!;
+    }
+
     // TODO: check OwnValues
     return this;
   }
