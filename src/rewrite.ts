@@ -42,5 +42,5 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
   return [false, env];
 }
 
-const isBlank = (e: Expr) =>
+const isBlank = (e: Expr): e is Form =>
   e instanceof Form && e.head instanceof Symbol && e.head.val == 'Blank';
