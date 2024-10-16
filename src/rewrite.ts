@@ -4,17 +4,20 @@ import { Head } from "./builtins";
 export type Env = Map<Symbol, Expr>;
 
 export const match = (e: Expr, p: Expr): [boolean, Env] => {
-  const env: Env = new Map();
+  let env: Env = new Map();
 
   // Treat `HoldPattern` specially
   if (p instanceof Form && p.head instanceof Symbol && p.head.val == 'HoldPattern') {
     p = p.parts[0];
-    // TODO: add HoldPattern to builtins, check arg count, set attrs
+    // TODO: add HoldPattern, Blank, Pattern to builtins, check arg count, set attrs
   }
 
   // match patterns first
   if (isBlank(p)) {
     return [matchBlank(e, p), env];
+  }
+  if (isPattern(p)) {
+    return matchPattern(e,p);
   }
 
   // The rest is essentially deepEqual
@@ -33,9 +36,11 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
     if (!matches) { return [false, env]; }
     
     for(let i = 0; i<e.parts.length; i++) {
-      const [matchesp, env_] = match(e.parts[i], p.parts[i]);
+      let [matchesp, env_] = match(e.parts[i], p.parts[i]);
       if (!matchesp) { return [false, env]; }
-      // TODO: merge envs
+
+      [matchesp, env] = mergeEnv(env, env_);
+      if (!matchesp) { return [false, env]; }
     }
     return [true, env];
   }
@@ -46,7 +51,7 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
 const isBlank = (e: Expr): e is Form =>
   e instanceof Form && e.head instanceof Symbol && e.head.val == 'Blank';
 
-const matchBlank = (e: Expr, p: Form) => {
+const matchBlank = (e: Expr, p: Form): boolean => {
   if (!(p.head instanceof Symbol && p.head.val == 'Blank')) {
     return false;
   }
@@ -56,4 +61,39 @@ const matchBlank = (e: Expr, p: Form) => {
   }
 
   return Head([e]) == p.parts[0];
+}
+
+const isPattern = (e: Expr): e is Form =>
+  e instanceof Form && e.head instanceof Symbol && e.head.val == 'Pattern';
+
+const matchPattern = (e: Expr, p: Form): [boolean, Env] => {
+  const env: Env = new Map();
+  if (!isBlank(p.parts[1])
+    || !(p.parts[0] instanceof Symbol))
+  {
+    throw "ThisShouldNeverHappenException:)";
+  }
+  if (!matchBlank(e, p.parts[1])) {
+    return [false, env];
+  }
+
+  env.set(p.parts[0], e);
+  return [true, env];
+}
+
+const mergeEnv = (env1: Env, env2: Env): [boolean, Env] => {
+  const env: Env = new Map(env1);
+  for (const k of Array.from(env2.keys())) {
+    const v = env2.get(k)!;
+    if (env.has(k)) {
+      const [matches] = match(env.get(k)!, v);
+      if (!matches) {
+        return [false, env];
+      }
+    } else {
+      env.set(k,v);
+    }
+  }
+
+  return [true, env];
 }
