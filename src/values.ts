@@ -1,5 +1,6 @@
 import { Symbol, Expr, Form } from './ast';
 import { attrs } from './attrs';
+import { isRule } from './rewrite';
 import { symbol } from './symbols';
 
 export const ownValues: Map<Symbol, Expr[]> = new Map();
@@ -30,6 +31,34 @@ export const assign = (lhs: Expr, rhs: Expr) => {
 }
 
 const withRule = (rules: Expr[], newRule: Expr): Expr[] => {
-  // TODO: duplicates & specificity
-  return [...rules, newRule];
+  rules = [...rules];
+  if (!isRule(newRule)) { throw "Rules expected"; }
+
+  if (rules.length == 0) {
+    return [newRule];
+  }
+
+  for (let i = 0; i < rules.length; i++) {
+    const rule = rules[i];
+    if (!isRule(rule)) { throw "Rules expected"; }
+
+    const res = comparedPatterns(newRule.parts[i], rule.parts[i]);
+    if (res == -1) {
+      // new rule goes before the one we're visiting
+      rules.splice(i, 0, newRule)
+      return rules;
+    } else if (res == 0) {
+      // new rule replaces the one we're visiting
+      rules.splice(i, 1, newRule)
+      return rules;
+    }
+  }
+
+  // new rule goes at the end
+  rules.push(newRule);
+  return rules;
+}
+
+const comparedPatterns = (p1: Expr, p2: Expr) => {
+  return 1;
 }
