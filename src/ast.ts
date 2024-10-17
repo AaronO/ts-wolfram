@@ -1,7 +1,8 @@
 import { attrs } from './attrs';
 import { symbol } from './symbols';
 import { builtin } from './builtins';
-import type { Env } from './rewrite';
+import { replaceRepeated, rulesToPairs, Env } from './rewrite';
+import { downValues, ownValues } from './values';
 
 export type Expr = Form | Symbol | Int;
 
@@ -58,9 +59,9 @@ export class Form implements Node {
       return fn(parts_, evaled);
     }
 
-    // TODO: check DownValues
-
-    return evaled;
+    // check DownValues
+    const downvals = downValues.get(head_);
+    return downvals ? replaceRepeated(evaled, rulesToPairs(downvals)) : evaled;
   };
 
   repr(): string {
@@ -75,8 +76,8 @@ export class Symbol implements Node {
       return localEnv.get(this)!;
     }
 
-    // TODO: check OwnValues
-    return this;
+    const ownvals = ownValues.get(this);
+    return ownvals ? replaceRepeated(this, rulesToPairs(ownvals)) : this;
   }
 
   repr (): string {

@@ -1,8 +1,9 @@
 import { Int, Symbol, Expr, Form } from './ast';
 import { symbol } from './symbols';
 import { attrs, setAttrs, clearAttrs } from './attrs';
-import { match, replace, replaceAll, replaceRepeated } from './rewrite';
+import { match, replace, replaceAll, replaceRepeated, isRule } from './rewrite';
 import { list, isList } from './list';
+import { assign, ownValues, downValues } from './values';
 
 type Builtin = (parts: Expr[], self: Expr) => Expr;
 const builtinsTable: Map<Symbol, Builtin> = new Map();
@@ -68,6 +69,12 @@ export const populateBuiltins = () => {
 
   builtinsTable.set(symbol('SetDelayed'), SetDelayed);
   setAttrs(symbol('SetDelayed'), ["HoldAll", "Protected"].map(symbol));
+
+  builtinsTable.set(symbol('OwnValues'), OwnValues);
+  setAttrs(symbol('OwnValues'), ["HoldAll", "Protected"].map(symbol));
+
+  builtinsTable.set(symbol('DownValues'), DownValues);
+  setAttrs(symbol('DownValues'), ["HoldAll", "Protected"].map(symbol));
 }
 
 /*
@@ -252,11 +259,6 @@ const Blank = (parts: Expr[], self: Expr) => {
 /*
   Term rewriting
 */
-const isRule = (e: Expr): e is Form =>
-  e instanceof Form
-  && e.head instanceof Symbol
-  && ["Rule", "RuleDelayed"].includes(e.head.val);
-
 const Replace = (parts: Expr[]) => {
   if (parts.length != 2) {
     throw errArgCount('Replace', 2, parts.length);
@@ -324,7 +326,36 @@ const Set_ = (parts: Expr[]) => {
 }
 
 const SetDelayed = (parts: Expr[]) => {
-  throw "TODO;"
+  if (parts.length != 2) {
+    throw errArgCount('SetDelayed', 2, parts.length);
+  }
+
+  assign(parts[0], parts[1]);
+  return symbol('Null');
+}
+
+const OwnValues = (parts: Expr[]) => {
+  if (parts.length != 1) {
+    throw errArgCount('OwnValues', 1, parts.length);
+  }
+
+  if (!(parts[0] instanceof Symbol)) {
+    throw errArgType('OwnValues', ['a symbol']);
+  }
+
+  return list(ownValues.get(parts[0]) || []);
+}
+
+const DownValues = (parts: Expr[]) => {
+  if (parts.length != 1) {
+    throw errArgCount('DownValues', 1, parts.length);
+  }
+
+  if (!(parts[0] instanceof Symbol)) {
+    throw errArgType('DownValues', ['a symbol']);
+  }
+
+  return list(downValues.get(parts[0]) || []);
 }
 
 /*

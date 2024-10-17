@@ -137,3 +137,18 @@ export const replaceRepeated = (expr: Expr,  rules: [Expr, Expr][]): Expr => {
     }
   }
 }
+
+export const ruleToPair = (rule: Expr): [Expr, Expr] => {
+  if (isRule(rule)) {
+    return [rule.parts[0], rule.parts[1]];
+  }
+  throw "Expected a rule";
+}
+
+export const rulesToPairs = (rules: Expr[]) => rules.map(ruleToPair);
+
+export const isRule = (e: Expr): e is Form =>
+  e instanceof Form
+  && e.head instanceof Symbol
+  && ["Rule", "RuleDelayed"].includes(e.head.val);
+
