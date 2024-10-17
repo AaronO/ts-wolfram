@@ -8,34 +8,34 @@ Mathematica that's good enough to differentiate many simple functions
 from a standard single variable calculus textbook:
 
 ```wl
-Df[_?NumberQ, x_Symbol] = 0;
-Df[x_, x_Symbol] = 1;
-Df[Times[expr1_, expr2_], x_Symbol] =
-  Df[expr1, x] expr2 + Df[expr2, x] expr1;
-Df[Plus[expr1_, expr2_], x_Symbol] = Df[expr1, x] + Df[expr2, x];
-Df[Sin[x_], x_Symbol] = Cos[x];
-Df[Cos[x_], x_Symbol] = -Sin[x];
-Df[f_Symbol[expr_], x_Symbol] :=
-  (Df[f[x], x] /. x -> expr) * Df[expr, x];
-Df[Power[expr_, p_Integer], x_Symbol] := p expr^(p - 1) * Df[expr, x];
+D[_?NumberQ, x_Symbol] = 0;
+D[x_, x_Symbol] = 1;
+D[Times[expr1_, expr2_], x_Symbol] =
+  D[expr1, x] expr2 + D[expr2, x] expr1;
+D[Plus[expr1_, expr2_], x_Symbol] = D[expr1, x] + D[expr2, x];
+D[Sin[x_], x_Symbol] = Cos[x];
+D[Cos[x_], x_Symbol] = -Sin[x];
+D[f_Symbol[expr_], x_Symbol] :=
+  (D[f[x], x] /. x -> expr) * D[expr, x];
+D[Power[expr_, p_Integer], x_Symbol] := p expr^(p - 1) * D[expr, x];
 ```
 
 The `ts-wolfram` project implements enough of the Wolfram Language to
-successfully (and correctly) evaluate `Df` on the following examples:
+successfully (and correctly) evaluate `D` on the following examples:
 
 ```wl
-Df[1, x],
-Df[x, x],
-Df[x^5, x],
-Df[3 x^2, x],
-Df[(x + 1) (x + 2), x],
-Df[x^2 + x^3, x],
-Df[Cos[x], x],
-Df[x^3/(x^2 + 1), x],
-Df[Cos[Cos[x]], x],
-Df[Cos[Cos[Cos[x]]], x],
-Df[Cos[x^2 + 1], x],
-Df[(x + 1)^2, x]
+D[1, x],
+D[x, x],
+D[x^5, x],
+D[3 x^2, x],
+D[(x + 1) (x + 2), x],
+D[x^2 + x^3, x],
+D[Cos[x], x],
+D[x^3/(x^2 + 1), x],
+D[Cos[Cos[x]], x],
+D[Cos[Cos[Cos[x]]], x],
+D[Cos[x^2 + 1], x],
+D[(x + 1)^2, x]
 ```
 
 This has been a really fun and instructive project. Supported features
