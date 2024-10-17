@@ -85,6 +85,10 @@ export const populateBuiltins = () => {
   // evaluation control
   builtinsTable.set(symbol('Hold'), Hold);
   setAttrs(symbol('Hold'), ["HoldAll", "Protected"].map(symbol));
+
+  // more
+  builtinsTable.set(symbol('NumberQ'), NumberQ);
+  setAttrs(symbol('NumberQ'), ["Protected"].map(symbol));
 }
 
 /*
@@ -407,6 +411,17 @@ const Hold = (parts: Expr[], self: Expr) => {
   }
 
   return self;
+}
+
+/*
+  More
+*/
+const NumberQ = (parts: Expr[]) => {
+  if (parts.length != 1) {
+    throw errArgCount('Hold', 1, parts.length);
+  }
+
+  return symbol(parts[0] instanceof Int ? 'True' : 'False');
 }
 
 /*
