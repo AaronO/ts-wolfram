@@ -44,6 +44,9 @@ export const populateBuiltins = () => {
   builtinsTable.set(symbol('Pattern'), Pattern);
   setAttrs(symbol('Pattern'), ["HoldFirst", "Protected"].map(symbol));
 
+  builtinsTable.set(symbol('PatternTest'), PatternTest);
+  setAttrs(symbol('PatternTest'), ["HoldRest", "Protected"].map(symbol));
+
   builtinsTable.set(symbol('Blank'), Blank);
   setAttrs(symbol('Blank'), ["Protected"].map(symbol));
 
@@ -247,6 +250,14 @@ const HoldPattern = (parts: Expr[], self: Expr) => {
 const Pattern = (parts: Expr[], self: Expr) => {
   if (parts.length != 2) {
     throw errArgCount('Pattern', 2, parts.length);
+  }
+
+  return self;
+}
+
+const PatternTest = (parts: Expr[], self: Expr) => {
+  if (parts.length != 2) {
+    throw errArgCount('PatternTest', 2, parts.length);
   }
 
   return self;

@@ -40,9 +40,12 @@ const factor = fwd(() => binop(either('*', '/', peek(not(either('+', '-')))), ex
   new Form(symbol('Times'), [l, (op == '*' || op == null) ? r : new Form(
     symbol('Power'), [r, new Int(-1)])])));
 
-const exponent = fwd(() => binopr(either('^'), literal, (_, l, r: Expr): Form =>
+const exponent = fwd(() => binopr(either('^'), ptest, (_, l, r: Expr): Form =>
   new Form(symbol('Power'), [l, r])));
 
+const ptest = fwd(() => binopr(either('?'), literal, (_, l, r: Expr): Form =>
+  new Form(symbol('PatternTest'), [l, r])));
+    
 /*
   Literals (forms & non-forms)
 */
