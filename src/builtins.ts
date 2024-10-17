@@ -75,6 +75,9 @@ export const populateBuiltins = () => {
 
   builtinsTable.set(symbol('DownValues'), DownValues);
   setAttrs(symbol('DownValues'), ["HoldAll", "Protected"].map(symbol));
+
+  builtinsTable.set(symbol('Clear'), Clear);
+  setAttrs(symbol('Clear'), ["HoldAll", "Protected"].map(symbol));
 }
 
 /*
@@ -322,7 +325,12 @@ const RuleDelayed = (parts: Expr[], self: Expr) => {
   Values
 */
 const Set_ = (parts: Expr[]) => {
-  throw "TODO;"
+  if (parts.length != 2) {
+    throw errArgCount('SetDelayed', 2, parts.length);
+  }
+
+  assign(parts[0], parts[1]);
+  return symbol('Null');
 }
 
 const SetDelayed = (parts: Expr[]) => {
@@ -356,6 +364,23 @@ const DownValues = (parts: Expr[]) => {
   }
 
   return list(downValues.get(parts[0]) || []);
+}
+
+const Clear = (parts: Expr[]) => {
+  let doerr = false;
+  for (const s of parts) {
+    if (!(s instanceof Symbol)) {
+      doerr = true;
+      continue;
+    }
+    ownValues.delete(s);
+    downValues.delete(s);
+  }
+
+  if (doerr) {
+    throw "Symbols only please."
+  }
+  return symbol("Null");
 }
 
 /*
