@@ -10,19 +10,19 @@ import { list } from './list';
 /*
   Grammar entry point.
 */
-export const expr = fwd(() => replace);
+export const expr = fwd(() => assignment);
 
 /*
   Operators: replace, rule, assignments, terms, factors, exponents
 */
+const assignment = fwd(() => binopr(either('=', ':='), replace, (op, l, r: Expr): Form =>
+  new Form(symbol(op == '=' ? 'Set' : 'SetDelayed'), [l, r])));
+
 const replace = fwd(() => binop(either('/.', '//.'), rule, (op, l: Expr, r): Form =>
   new Form(symbol(op == '/.' ? 'ReplaceAll' : 'ReplaceRepeated'), [l, r])));
 
-const rule = fwd(() => binopr(either('->', ':>'), assignment, (op, l, r: Expr): Form =>
+const rule = fwd(() => binopr(either('->', ':>'), term, (op, l, r: Expr): Form =>
   new Form(symbol(op == '->' ? 'Rule' : 'RuleDelayed'), [l, r])));
-
-const assignment = fwd(() => binopr(either('=', ':='), term, (op, l, r: Expr): Form =>
-  new Form(symbol(op == '=' ? 'Set' : 'SetDelayed'), [l, r])));
 
 const term = fwd(() => binop(either('+', '-'), factor, (op, l: Expr, r): Form => {
   let right: Expr = r;
