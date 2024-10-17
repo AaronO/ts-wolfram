@@ -1,5 +1,6 @@
 import { Form, Expr, Symbol, Int } from "./ast"
 import { Head } from "./builtins";
+import { symbol } from "./symbols";
 
 export type Env = Map<Symbol, Expr>;
 
@@ -17,6 +18,10 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
   }
   if (isPattern(p)) {
     return matchPattern(e,p);
+  }
+
+  if (isPatternTest(p)) {
+    return matchPatternTest(e,p);
   }
 
   // The rest is essentially deepEqual
@@ -78,6 +83,21 @@ const matchPattern = (e: Expr, p: Form): [boolean, Env] => {
 
   env.set(p.parts[0], e);
   return [true, env];
+}
+
+const isPatternTest = (e: Expr): e is Form =>
+  e instanceof Form && e.head instanceof Symbol && e.head.val == 'PatternTest';
+
+const matchPatternTest = (e: Expr, p: Form): [boolean, Env] => {
+  const [matchedp, env] = match(e, p.parts[0]);
+  if (!matchedp) {
+    return [false, env];
+  }
+
+  const testForm = new Form(p.parts[1], [e]);
+  const passedp = testForm.eval(env) == symbol('True');
+
+  return [passedp, env];
 }
 
 const mergeEnv = (env1: Env, env2: Env): [boolean, Env] => {
