@@ -78,6 +78,10 @@ export const populateBuiltins = () => {
 
   builtinsTable.set(symbol('Clear'), Clear);
   setAttrs(symbol('Clear'), ["HoldAll", "Protected"].map(symbol));
+
+  // evaluation control
+  builtinsTable.set(symbol('Hold'), Hold);
+  setAttrs(symbol('Hold'), ["HoldAll", "Protected"].map(symbol));
 }
 
 /*
@@ -381,6 +385,17 @@ const Clear = (parts: Expr[]) => {
     throw "Symbols only please."
   }
   return symbol("Null");
+}
+
+/*
+  Evaluation control
+*/
+const Hold = (parts: Expr[], self: Expr) => {
+  if (parts.length != 1) {
+    throw errArgCount('Hold', 1, parts.length);
+  }
+
+  return self;
 }
 
 /*
