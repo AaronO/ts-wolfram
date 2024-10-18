@@ -10,11 +10,16 @@ import { list } from './list';
 /*
   Grammar entry point.
 */
-export const expr = fwd(() => assignment);
+export const expr = fwd(() => compoundExpr);
 
 /*
   Operators: replace, rule, assignments, terms, factors, exponents
 */
+const compoundExpr = fwd(() => seq(assignment, many(seq(';', assignment).map2((_, e) => e)), maybe(';')).map2((e, es, t) => {
+  if (es.length == 0 && !t) return e;
+  return new Form(symbol("CompoundExpression"), [e, ...es, ...(t ? [symbol("Null")] : [])])
+}));
+
 const assignment = fwd(() => binopr(either('=', ':='), replace, (op, l, r: Expr): Form =>
   new Form(symbol(op == '=' ? 'Set' : 'SetDelayed'), [l, r])));
 
