@@ -47,7 +47,18 @@ are:
 - __Attributes__: `HoldFirst`, `HoldRest`, `HoldAll`, `Protected`,
   `Flat`. Also the builtins `Attributes`, `SetAttributes`,
   `ClearAttributes`.
-- __Field operators__: `Plus`, `Times`.
+- __Number functions__: `Plus`, `Times`, `Minus`, `NumberQ`.
+- __Form manipulation__: currently only `Head`.
+- __Pattern matching__: `MatchQ`, `HoldPattern`, `Pattern`,
+  `PatternTest`, `Blank`.
+- __Term rewriting__: `Replace`, `ReplaceAll`, `ReplaceRepeated`,
+  `Rule`, `DelayedRule`.
+- __Values__: `OwnValues`, `DownValues`, `Clear`.
+- __Evaluation control__: `Hold`, `CompoundExpression`.
 
-The list above is also a reasonably good indicator of the order in which
-the features were implemented.
+To use, clone the project and run:
+
+```sh
+npm install
+npm run build && node dist/index.js
+```
