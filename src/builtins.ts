@@ -30,6 +30,9 @@ export const populateBuiltins = () => {
   builtinsTable.set(symbol('Times'), Times);
   setAttrs(symbol('Times'), ["Protected", "Flat"].map(symbol));
 
+  builtinsTable.set(symbol('Power'), Power);
+  setAttrs(symbol('Power'), ["Protected"].map(symbol));
+
   builtinsTable.set(symbol('Minus'), Minus);
   setAttrs(symbol('Minus'), ["Protected"].map(symbol));
 
@@ -182,6 +185,8 @@ const Plus = (parts: Expr[]) => {
 
   if (rest.length == 0) {
     return new Int(acc);
+  } else if (acc == 0 && rest.length == 1) {
+    return rest[0];
   } else {
     return new Form(symbol("Plus"), acc == 0 ? rest : [new Int(acc), ...rest]);
   }
@@ -198,8 +203,14 @@ const Times = (parts: Expr[]) => {
     }
   }
 
+  if (acc == 0) {
+    return new Int(0);
+  }
+
   if (rest.length == 0) {
     return new Int(acc);
+  } else if (acc == 1 && rest.length == 1) {
+    return rest[0];
   } else {
     return new Form(symbol("Times"), acc == 1 ? rest : [new Int(acc), ...rest]);
   }
@@ -215,6 +226,34 @@ const Minus = (parts: Expr[], self: Expr) => {
   } else {
     return self;
   }
+}
+
+const Power = (parts: Expr[], self: Expr) => {
+  if (parts.length != 2) {
+    throw errArgCount('Power', 2, parts.length);
+  }
+
+  if (parts[0] instanceof Int
+    && parts[0].val == 0
+    && parts[1] instanceof Int
+    && parts[1].val == 0)
+  {
+    throw "Indeterminate expression";
+  }
+
+  if (parts[0] instanceof Int && parts[0].val == 1) {
+    return new Int(1);
+  }
+
+  if (parts[1] instanceof Int) {
+    if (parts[1].val == 0) {
+      return new Int(1);
+    } else if (parts[1].val == 1) {
+      return parts[0];
+    }
+  }
+
+  return self;
 }
 
 /*
