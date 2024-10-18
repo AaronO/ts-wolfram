@@ -1,6 +1,6 @@
 import { Int, Form, Expr } from './ast';
 import {
-  seq, alpha, many, alnum, int, either, sepBy,
+  seq, alpha, many, alnum, nat, either, sepBy,
   binop, binopr, stream, fwd, lex, parser, not,
   peek, maybe, some
 } from '@spakhm/ts-parsec';
@@ -43,9 +43,18 @@ const factor = fwd(() => binop(either('*', '/', peek(not(either('+', '-')))), ex
 const exponent = fwd(() => binopr(either('^'), ptest, (_, l, r: Expr): Form =>
   new Form(symbol('Power'), [l, r])));
 
-const ptest = fwd(() => binopr(either('?'), literal, (_, l, r: Expr): Form =>
+const ptest = fwd(() => binopr(either('?'), unaryMinus, (_, l, r: Expr): Form =>
   new Form(symbol('PatternTest'), [l, r])));
-    
+
+const unaryMinus = fwd(() => seq(many(either('-', '+')), literal).map2((signs, expr) => {
+  signs = signs.filter(s => s != '+');
+  if (signs.length % 2 == 0) {
+    return expr;
+  } else {
+    return new Form(symbol("Minus"), [expr]);
+  }
+}));
+
 /*
   Literals (forms & non-forms)
 */
@@ -87,5 +96,5 @@ const blank = fwd(() => lex(seq('_', maybe(symbol_)).map2((_, s) =>
 const symbol_ = lex(seq(alpha, many(alnum)).map2((ft, rt) =>
   symbol([ft, ...rt].join(""))));
 
-const integer = int.map<Int>(val =>
+const integer = nat.map<Int>(val =>
   new Int(val));

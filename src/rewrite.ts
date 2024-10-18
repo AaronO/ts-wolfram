@@ -52,7 +52,7 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
   return [false, env];
 }
 
-const isBlank = (e: Expr): e is Form =>
+export const isBlank = (e: Expr): e is Form =>
   e instanceof Form && e.head instanceof Symbol && e.head.val == 'Blank';
 
 const matchBlank = (e: Expr, p: Form): boolean => {
@@ -67,7 +67,7 @@ const matchBlank = (e: Expr, p: Form): boolean => {
   return Head([e]) == p.parts[0];
 }
 
-const isPattern = (e: Expr): e is Form =>
+export const isPattern = (e: Expr): e is Form =>
   e instanceof Form && e.head instanceof Symbol && e.head.val == 'Pattern';
 
 const matchPattern = (e: Expr, p: Form): [boolean, Env] => {
@@ -85,7 +85,7 @@ const matchPattern = (e: Expr, p: Form): [boolean, Env] => {
   return [true, env];
 }
 
-const isPatternTest = (e: Expr): e is Form =>
+export const isPatternTest = (e: Expr): e is Form =>
   e instanceof Form && e.head instanceof Symbol && e.head.val == 'PatternTest';
 
 const matchPatternTest = (e: Expr, p: Form): [boolean, Env] => {

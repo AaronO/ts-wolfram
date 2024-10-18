@@ -23,12 +23,15 @@ export const populateBuiltins = () => {
   builtinsTable.set(symbol('ClearAttributes'), ClearAttributes);
   setAttrs(symbol('ClearAttributes'), ["HoldFirst", "Protected"].map(symbol));
 
-  // field operations
+  // number operations
   builtinsTable.set(symbol('Plus'), Plus);
   setAttrs(symbol('Plus'), ["Protected", "Flat"].map(symbol));
 
   builtinsTable.set(symbol('Times'), Times);
   setAttrs(symbol('Times'), ["Protected", "Flat"].map(symbol));
+
+  builtinsTable.set(symbol('Minus'), Minus);
+  setAttrs(symbol('Minus'), ["Protected"].map(symbol));
 
   // form manipulation
   builtinsTable.set(symbol('Head'), Head);
@@ -164,7 +167,7 @@ const ClearAttributes = (parts: Expr[]) => {
 }
 
 /*
-  Field operations
+  Number operations
 */
 const Plus = (parts: Expr[]) => {
   let acc: number = 0;
@@ -199,6 +202,18 @@ const Times = (parts: Expr[]) => {
     return new Int(acc);
   } else {
     return new Form(symbol("Times"), acc == 1 ? rest : [new Int(acc), ...rest]);
+  }
+}
+
+const Minus = (parts: Expr[], self: Expr) => {
+  if (parts.length != 1) {
+    throw errArgCount('Minus', 1, parts.length);
+  }
+
+  if (parts[0] instanceof Int) {
+    return new Int(-parts[0].val);
+  } else {
+    return self;
   }
 }
 
