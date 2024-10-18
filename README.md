@@ -1,6 +1,7 @@
 
 This is a toy Wolfram/Mathematica language interpreter written in
-Typescript.
+Typescript. You can find a writeup about it
+[here](https://www.spakhm.com/ts-wolfram).
 
 The goal of the project is for me to develop a better understanding of
 exactly how Mathematica works. I first wrote a toy differentiator in
