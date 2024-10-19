@@ -3,14 +3,17 @@ import { symbol } from './symbols';
 import { attrs, setAttrs, clearAttrs } from './attrs';
 import { match, replace, replaceAll, replaceRepeated, isRule } from './rewrite';
 import { list, isList } from './list';
-import { assign, ownValues, downValues } from './values';
+import { assign, ownValues, downValues, withUnprotected } from './values';
 
 type Builtin = (parts: Expr[], self: Expr) => Expr;
 const builtinsTable: Map<Symbol, Builtin> = new Map();
 
 export const builtin = (sym: Symbol): Builtin | undefined => builtinsTable.get(sym);
 
-export const populateBuiltins = () => {
+export const populateBuiltins = () =>
+  withUnprotected(populateBuiltins_);
+
+const populateBuiltins_ = () => {
   setAttrs(symbol('Null'), ["Protected"].map(symbol));
 
   // attributes
@@ -224,7 +227,7 @@ const Times = (parts: Expr[]) => {
   }
 }
 
-const Minus = (parts: Expr[], self: Expr) => {
+const Minus = (parts: Expr[]) => {
   if (parts.length != 1) {
     throw errArgCount('Minus', 1, parts.length);
   }
@@ -232,7 +235,7 @@ const Minus = (parts: Expr[], self: Expr) => {
   if (parts[0] instanceof Int) {
     return new Int(-parts[0].val);
   } else {
-    return self;
+    return new Form(symbol("Times"), [new Int(-1), parts[0]]);
   }
 }
 

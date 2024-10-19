@@ -6,6 +6,15 @@ import { symbol } from './symbols';
 export const ownValues: Map<Symbol, Expr[]> = new Map();
 export const downValues: Map<Symbol, Expr[]> = new Map();
 
+let shouldCheckProtected = true;
+
+export const withUnprotected = (fn: (() => unknown)) => {
+  shouldCheckProtected = false;
+  const res = fn();
+  shouldCheckProtected = true;
+  return res;
+}
+
 export const assign = (lhs: Expr, rhs: Expr) => {
   let values: Map<Symbol, Expr[]>;
   let sym: Symbol;
@@ -19,7 +28,7 @@ export const assign = (lhs: Expr, rhs: Expr) => {
     throw "Symbol or form expected";
   }
 
-  if (attrs(sym).includes(symbol("Protected"))) {
+  if (shouldCheckProtected && attrs(sym).includes(symbol("Protected"))) {
     throw "Can't modify protected symbol";
   }
 

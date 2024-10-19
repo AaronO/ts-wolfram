@@ -5,6 +5,7 @@ import { populateBuiltins } from './builtins';
 import { symbol } from './symbols';
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { withUnprotected } from './values';
 
 function q(rl: Interface, query: string): Promise<string> {
   return new Promise((resolve) => {
@@ -14,12 +15,12 @@ function q(rl: Interface, query: string): Promise<string> {
 
 const main = async () => {
   populateBuiltins();
+
   const prelude = expr(fromString(await fs.readFile(path.resolve(__dirname, 'prelude.wl'), 'utf8')));
   if (prelude.type == 'err') {
     throw "Couldn't load prelude";
-  } else {
-    prelude.res.eval(new Map());
   }
+  withUnprotected(() => prelude.res.eval(new Map()));
 
   const rl = createInterface({
     input: process.stdin,

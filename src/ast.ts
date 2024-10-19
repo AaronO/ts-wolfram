@@ -3,6 +3,7 @@ import { symbol } from './symbols';
 import { builtin } from './builtins';
 import { replaceRepeated, rulesToPairs, Env } from './rewrite';
 import { downValues, ownValues } from './values';
+import { isSymbol } from 'lodash';
 
 export type Expr = Form | Symbol | Int;
 
@@ -53,15 +54,21 @@ export class Form implements Node {
       parts_ = parts2;
     }
 
-    const evaled = new Form(head_, parts_);
-    const fn = builtin(head_);
-    if (fn) {
-      return fn(parts_, evaled);
-    }
+    let evaled: Expr = new Form(head_, parts_);
 
     // check DownValues
     const downvals = downValues.get(head_);
-    return downvals ? replaceRepeated(evaled, rulesToPairs(downvals)) : evaled;
+    evaled = downvals ? replaceRepeated(evaled, rulesToPairs(downvals)) : evaled;
+
+    // Check builtins
+    if (evaled instanceof Form && evaled.head instanceof Symbol) {
+      const fn = builtin(evaled.head);
+      if (fn) {
+        evaled = fn(evaled.parts, evaled);
+      }
+    }
+
+    return evaled;
   };
 
   repr(): string {
