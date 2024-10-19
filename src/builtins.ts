@@ -97,6 +97,12 @@ export const populateBuiltins = () => {
 
   builtinsTable.set(symbol('CompoundExpression'), CompoundExpression);
   setAttrs(symbol('CompoundExpression'), ["HoldAll", "Protected"].map(symbol));
+
+  builtinsTable.set(symbol('Do'), Do);
+  setAttrs(symbol('Do'), ["HoldAll", "Protected"].map(symbol));
+
+  builtinsTable.set(symbol('Timing'), Timing);
+  setAttrs(symbol('Timing'), ["HoldAll", "Protected"].map(symbol));
 }
 
 /*
@@ -483,6 +489,38 @@ const CompoundExpression = (parts: Expr[]) => {
     res = part.eval(new Map());
   }
   return res;
+}
+
+const Do = (parts: Expr[]) => {
+  if (parts.length != 2) {
+    throw errArgCount('Do', 2, parts.length);
+  }
+
+  if (!(parts[1] instanceof Int)) {
+    throw errArgType("Do", ["an integer"]);
+  }
+
+  let res: Expr = symbol("Null");
+  for (let i = 0; i < parts[1].val; i++) {
+    res = parts[0].eval(new Map());
+  }
+
+  return res;
+}
+
+const Timing = (parts: Expr[]) => {
+  if (parts.length != 1) {
+    throw errArgCount('Timing', 1, parts.length);
+  }
+
+  const env = new Map();
+
+  const startTime = process.cpuUsage();
+  const res = parts[0].eval(env);
+  const diffTime = process.cpuUsage(startTime);
+
+  const cpuInUs = diffTime.user + diffTime.system;
+  return new Form(symbol("List"), [new Int(cpuInUs / 1_000_000), res]);
 }
 
 /*
