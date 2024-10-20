@@ -81,11 +81,19 @@ export const repr = (e: Expr): string => match(e, {
   Form: e => `${repr(e.head)}[${e.parts.map(x => repr(x)).join(", ")}]`,
 });
 
-export const eval_ = (e: Expr, lenv: Env): Expr => match(e, {
-  Integer: e => e,
-  Symbol: e => evalSym(e, lenv),
-  Form: e => evalForm(e, lenv),
-});
+export const eval_ = (e: Expr, lenv: Env): Expr => {
+  // We don't use `match` to make `eval_` implementation
+  // pretty like `repr`, because `match` is about 7 times
+  // slower than branching like this.
+  if (e.type == Types.Integer) {
+    return e;
+  } else if (e.type == Types.Symbol) {
+    return evalSym(e, lenv);
+  } else if (e.type == Types.Form) {
+    return evalForm(e, lenv);
+  }
+  throw "Unknown type";
+};
 
 const evalSym = (sym: Symbol, localEnv: Env): Expr => {
   if (localEnv.has(sym)) {
