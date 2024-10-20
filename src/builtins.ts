@@ -1,8 +1,6 @@
-import { Int, Symbol, Expr, Form } from './ast';
-import { symbol } from './symbols';
+import { Symbol, Expr, isSymbol, isInteger, sym, list, isList, int, form, isForm, eval_ } from './ast';
 import { attrs, setAttrs, clearAttrs } from './attrs';
 import { match, replace, replaceAll, replaceRepeated, isRule } from './rewrite';
-import { list, isList } from './list';
 import { assign, ownValues, downValues, withUnprotected } from './values';
 
 type Builtin = (parts: Expr[], self: Expr) => Expr;
@@ -14,98 +12,98 @@ export const populateBuiltins = () =>
   withUnprotected(populateBuiltins_);
 
 const populateBuiltins_ = () => {
-  setAttrs(symbol('Null'), ["Protected"].map(symbol));
+  setAttrs(sym('Null'), ["Protected"].map(sym));
 
   // attributes
-  builtinsTable.set(symbol('Attributes'), Attributes);
-  setAttrs(symbol('Attributes'), ["HoldAll", "Protected"].map(symbol));
+  builtinsTable.set(sym('Attributes'), Attributes);
+  setAttrs(sym('Attributes'), ["HoldAll", "Protected"].map(sym));
 
-  builtinsTable.set(symbol('SetAttributes'), SetAttributes);
-  setAttrs(symbol('SetAttributes'), ["HoldFirst", "Protected"].map(symbol));
+  builtinsTable.set(sym('SetAttributes'), SetAttributes);
+  setAttrs(sym('SetAttributes'), ["HoldFirst", "Protected"].map(sym));
 
-  builtinsTable.set(symbol('ClearAttributes'), ClearAttributes);
-  setAttrs(symbol('ClearAttributes'), ["HoldFirst", "Protected"].map(symbol));
+  builtinsTable.set(sym('ClearAttributes'), ClearAttributes);
+  setAttrs(sym('ClearAttributes'), ["HoldFirst", "Protected"].map(sym));
 
   // number operations
-  builtinsTable.set(symbol('Plus'), Plus);
-  setAttrs(symbol('Plus'), ["Protected", "Flat"].map(symbol));
+  builtinsTable.set(sym('Plus'), Plus);
+  setAttrs(sym('Plus'), ["Protected", "Flat"].map(sym));
 
-  builtinsTable.set(symbol('Times'), Times);
-  setAttrs(symbol('Times'), ["Protected", "Flat"].map(symbol));
+  builtinsTable.set(sym('Times'), Times);
+  setAttrs(sym('Times'), ["Protected", "Flat"].map(sym));
 
-  builtinsTable.set(symbol('Power'), Power);
-  setAttrs(symbol('Power'), ["Protected"].map(symbol));
+  builtinsTable.set(sym('Power'), Power);
+  setAttrs(sym('Power'), ["Protected"].map(sym));
 
-  builtinsTable.set(symbol('Minus'), Minus);
-  setAttrs(symbol('Minus'), ["Protected"].map(symbol));
+  builtinsTable.set(sym('Minus'), Minus);
+  setAttrs(sym('Minus'), ["Protected"].map(sym));
 
-  builtinsTable.set(symbol('NumberQ'), NumberQ);
-  setAttrs(symbol('NumberQ'), ["Protected"].map(symbol));
+  builtinsTable.set(sym('NumberQ'), NumberQ);
+  setAttrs(sym('NumberQ'), ["Protected"].map(sym));
 
   // form manipulation
-  builtinsTable.set(symbol('Head'), Head);
-  setAttrs(symbol('Head'), ["Protected"].map(symbol));
+  builtinsTable.set(sym('Head'), Head);
+  setAttrs(sym('Head'), ["Protected"].map(sym));
 
   // Pattern matching
-  builtinsTable.set(symbol('MatchQ'), MatchQ);
-  setAttrs(symbol('MatchQ'), ["Protected"].map(symbol));
+  builtinsTable.set(sym('MatchQ'), MatchQ);
+  setAttrs(sym('MatchQ'), ["Protected"].map(sym));
 
-  builtinsTable.set(symbol('HoldPattern'), HoldPattern);
-  setAttrs(symbol('HoldPattern'), ["HoldAll", "Protected"].map(symbol));
+  builtinsTable.set(sym('HoldPattern'), HoldPattern);
+  setAttrs(sym('HoldPattern'), ["HoldAll", "Protected"].map(sym));
 
-  builtinsTable.set(symbol('Pattern'), Pattern);
-  setAttrs(symbol('Pattern'), ["HoldFirst", "Protected"].map(symbol));
+  builtinsTable.set(sym('Pattern'), Pattern);
+  setAttrs(sym('Pattern'), ["HoldFirst", "Protected"].map(sym));
 
-  builtinsTable.set(symbol('PatternTest'), PatternTest);
-  setAttrs(symbol('PatternTest'), ["HoldRest", "Protected"].map(symbol));
+  builtinsTable.set(sym('PatternTest'), PatternTest);
+  setAttrs(sym('PatternTest'), ["HoldRest", "Protected"].map(sym));
 
-  builtinsTable.set(symbol('Blank'), Blank);
-  setAttrs(symbol('Blank'), ["Protected"].map(symbol));
+  builtinsTable.set(sym('Blank'), Blank);
+  setAttrs(sym('Blank'), ["Protected"].map(sym));
 
   // Term rewriting
-  builtinsTable.set(symbol('Replace'), Replace);
-  setAttrs(symbol('Replace'), ["Protected"].map(symbol));
+  builtinsTable.set(sym('Replace'), Replace);
+  setAttrs(sym('Replace'), ["Protected"].map(sym));
 
-  builtinsTable.set(symbol('ReplaceAll'), ReplaceAll);
-  setAttrs(symbol('ReplaceAll'), ["Protected"].map(symbol));
+  builtinsTable.set(sym('ReplaceAll'), ReplaceAll);
+  setAttrs(sym('ReplaceAll'), ["Protected"].map(sym));
 
-  builtinsTable.set(symbol('ReplaceRepeated'), ReplaceRepeated);
-  setAttrs(symbol('ReplaceRepeated'), ["Protected"].map(symbol));
+  builtinsTable.set(sym('ReplaceRepeated'), ReplaceRepeated);
+  setAttrs(sym('ReplaceRepeated'), ["Protected"].map(sym));
 
-  builtinsTable.set(symbol('Rule'), Rule);
-  setAttrs(symbol('Rule'), ["Protected"].map(symbol));
+  builtinsTable.set(sym('Rule'), Rule);
+  setAttrs(sym('Rule'), ["Protected"].map(sym));
 
-  builtinsTable.set(symbol('RuleDelayed'), RuleDelayed);
-  setAttrs(symbol('RuleDelayed'), ["HoldRest", "Protected"].map(symbol));
+  builtinsTable.set(sym('RuleDelayed'), RuleDelayed);
+  setAttrs(sym('RuleDelayed'), ["HoldRest", "Protected"].map(sym));
 
   // Values (Own, Down)
-  builtinsTable.set(symbol('Set'), Set_);
-  setAttrs(symbol('Set'), ["HoldFirst", "Protected"].map(symbol));
+  builtinsTable.set(sym('Set'), Set_);
+  setAttrs(sym('Set'), ["HoldFirst", "Protected"].map(sym));
 
-  builtinsTable.set(symbol('SetDelayed'), SetDelayed);
-  setAttrs(symbol('SetDelayed'), ["HoldAll", "Protected"].map(symbol));
+  builtinsTable.set(sym('SetDelayed'), SetDelayed);
+  setAttrs(sym('SetDelayed'), ["HoldAll", "Protected"].map(sym));
 
-  builtinsTable.set(symbol('OwnValues'), OwnValues);
-  setAttrs(symbol('OwnValues'), ["HoldAll", "Protected"].map(symbol));
+  builtinsTable.set(sym('OwnValues'), OwnValues);
+  setAttrs(sym('OwnValues'), ["HoldAll", "Protected"].map(sym));
 
-  builtinsTable.set(symbol('DownValues'), DownValues);
-  setAttrs(symbol('DownValues'), ["HoldAll", "Protected"].map(symbol));
+  builtinsTable.set(sym('DownValues'), DownValues);
+  setAttrs(sym('DownValues'), ["HoldAll", "Protected"].map(sym));
 
-  builtinsTable.set(symbol('Clear'), Clear);
-  setAttrs(symbol('Clear'), ["HoldAll", "Protected"].map(symbol));
+  builtinsTable.set(sym('Clear'), Clear);
+  setAttrs(sym('Clear'), ["HoldAll", "Protected"].map(sym));
 
   // evaluation control
-  builtinsTable.set(symbol('Hold'), Hold);
-  setAttrs(symbol('Hold'), ["HoldAll", "Protected"].map(symbol));
+  builtinsTable.set(sym('Hold'), Hold);
+  setAttrs(sym('Hold'), ["HoldAll", "Protected"].map(sym));
 
-  builtinsTable.set(symbol('CompoundExpression'), CompoundExpression);
-  setAttrs(symbol('CompoundExpression'), ["HoldAll", "Protected"].map(symbol));
+  builtinsTable.set(sym('CompoundExpression'), CompoundExpression);
+  setAttrs(sym('CompoundExpression'), ["HoldAll", "Protected"].map(sym));
 
-  builtinsTable.set(symbol('Do'), Do);
-  setAttrs(symbol('Do'), ["HoldAll", "Protected"].map(symbol));
+  builtinsTable.set(sym('Do'), Do);
+  setAttrs(sym('Do'), ["HoldAll", "Protected"].map(sym));
 
-  builtinsTable.set(symbol('Timing'), Timing);
-  setAttrs(symbol('Timing'), ["HoldAll", "Protected"].map(symbol));
+  builtinsTable.set(sym('Timing'), Timing);
+  setAttrs(sym('Timing'), ["HoldAll", "Protected"].map(sym));
 }
 
 /*
@@ -116,11 +114,11 @@ const Attributes = (parts: Expr[]) => {
     throw errArgCount('Attributes', 1, parts.length);
   }
 
-  if (parts[0] instanceof Symbol) {
+  if (isSymbol(parts[0])) {
     return list(attrs(parts[0]));
   } else if (isList(parts[0])) {
     return list(parts[0].parts.map(x => {
-      if (x instanceof Symbol) {
+      if (isSymbol(x)) {
         return list(attrs(x));
       }
       throw errArgType('Attributes', ['a symbol', 'a list of symbols']);
@@ -135,14 +133,14 @@ const SetAttributes = (parts: Expr[]) => {
     throw errArgCount('SetAttributes', 2, parts.length);
   }
   let syms = (isList(parts[0]) ? parts[0].parts : [parts[0]]).map(s => {
-    if (!(s instanceof Symbol)) {
+    if (!(isSymbol(s))) {
       throw errArgType('SetAttributes', ['a symbol', 'a list of symbols']);
     }
     return s;
   })
 
   const attrs = (isList(parts[1]) ? parts[1].parts : [parts[1]]).map(s => {
-    if (!(s instanceof Symbol)) {
+    if (!(isSymbol(s))) {
       throw errArgType('SetAttributes', ['a symbol', 'a list of symbols']);
     }
     return s;
@@ -152,7 +150,7 @@ const SetAttributes = (parts: Expr[]) => {
     setAttrs(sym, attrs);
   }
 
-  return symbol('Null');
+  return sym('Null');
 }
 
 const ClearAttributes = (parts: Expr[]) => {
@@ -160,14 +158,14 @@ const ClearAttributes = (parts: Expr[]) => {
     throw errArgCount('ClearAttributes', 2, parts.length);
   }
   let syms = (isList(parts[0]) ? parts[0].parts : [parts[0]]).map(s => {
-    if (!(s instanceof Symbol)) {
+    if (!(isSymbol(s))) {
       throw errArgType('ClearAttributes', ['a symbol', 'a list of symbols']);
     }
     return s;
   })
 
   const attrs = (isList(parts[1]) ? parts[1].parts : [parts[1]]).map(s => {
-    if (!(s instanceof Symbol)) {
+    if (!(isSymbol(s))) {
       throw errArgType('ClearAttributes', ['a symbol', 'a list of symbols']);
     }
     return s;
@@ -177,7 +175,7 @@ const ClearAttributes = (parts: Expr[]) => {
     clearAttrs(sym, attrs);
   }
 
-  return symbol('Null');
+  return sym('Null');
 }
 
 /*
@@ -187,7 +185,7 @@ const Plus = (parts: Expr[]) => {
   let acc: number = 0;
   let rest: Expr[] = [];
   for (const part of parts) {
-    if (part instanceof Int) {
+    if (isInteger(part)) {
       acc += part.val;
     } else {
       rest.push(part);
@@ -195,11 +193,11 @@ const Plus = (parts: Expr[]) => {
   }
 
   if (rest.length == 0) {
-    return new Int(acc);
+    return int(acc);
   } else if (acc == 0 && rest.length == 1) {
     return rest[0];
   } else {
-    return new Form(symbol("Plus"), acc == 0 ? rest : [new Int(acc), ...rest]);
+    return form(sym("Plus"), acc == 0 ? rest : [int(acc), ...rest]);
   }
 }
 
@@ -207,7 +205,7 @@ const Times = (parts: Expr[]) => {
   let acc: number = 1;
   let rest: Expr[] = [];
   for (const part of parts) {
-    if (part instanceof Int) {
+    if (isInteger(part)) {
       acc *= part.val;
     } else {
       rest.push(part);
@@ -215,15 +213,15 @@ const Times = (parts: Expr[]) => {
   }
 
   if (acc == 0) {
-    return new Int(0);
+    return int(0);
   }
 
   if (rest.length == 0) {
-    return new Int(acc);
+    return int(acc);
   } else if (acc == 1 && rest.length == 1) {
     return rest[0];
   } else {
-    return new Form(symbol("Times"), acc == 1 ? rest : [new Int(acc), ...rest]);
+    return form(sym("Times"), acc == 1 ? rest : [int(acc), ...rest]);
   }
 }
 
@@ -232,10 +230,10 @@ const Minus = (parts: Expr[]) => {
     throw errArgCount('Minus', 1, parts.length);
   }
 
-  if (parts[0] instanceof Int) {
-    return new Int(-parts[0].val);
+  if (isInteger(parts[0])) {
+    return int(-parts[0].val);
   } else {
-    return new Form(symbol("Times"), [new Int(-1), parts[0]]);
+    return form(sym("Times"), [int(-1), parts[0]]);
   }
 }
 
@@ -244,21 +242,21 @@ const Power = (parts: Expr[], self: Expr) => {
     throw errArgCount('Power', 2, parts.length);
   }
 
-  if (parts[0] instanceof Int
+  if (isInteger(parts[0])
     && parts[0].val == 0
-    && parts[1] instanceof Int
+    && isInteger(parts[1])
     && parts[1].val == 0)
   {
     throw "Indeterminate expression";
   }
 
-  if (parts[0] instanceof Int && parts[0].val == 1) {
-    return new Int(1);
+  if (isInteger(parts[0]) && parts[0].val == 1) {
+    return int(1);
   }
 
-  if (parts[1] instanceof Int) {
+  if (isInteger(parts[1])) {
     if (parts[1].val == 0) {
-      return new Int(1);
+      return int(1);
     } else if (parts[1].val == 1) {
       return parts[0];
     }
@@ -272,7 +270,7 @@ const NumberQ = (parts: Expr[]) => {
     throw errArgCount('Hold', 1, parts.length);
   }
 
-  return symbol(parts[0] instanceof Int ? 'True' : 'False');
+  return sym(isInteger(parts[0]) ? 'True' : 'False');
 }
 
 /*
@@ -284,11 +282,11 @@ export const Head = (parts: Expr[]) => {
   }
 
   const e = parts[0];
-  if (e instanceof Int) {
-    return symbol("Integer");
-  } else if (e instanceof Symbol) {
-    return symbol("Symbol");
-  } else if (e instanceof Form) {
+  if (isInteger(e)) {
+    return sym("Integer");
+  } else if (isSymbol(e)) {
+    return sym("Symbol");
+  } else if (isForm(e)) {
     return e.head;
   }
 
@@ -305,7 +303,7 @@ const MatchQ = (parts: Expr[]) => {
 
   const [matches, env] = match(parts[0], parts[1]);
   if (!matches) {
-    return symbol("False");
+    return sym("False");
   }
 
   // Uncomment to debug environment
@@ -313,7 +311,7 @@ const MatchQ = (parts: Expr[]) => {
     //console.log(`${k.repr()} -> ${env.get(k)!.repr()}`);
   }
 
-  return symbol("True");
+  return sym("True");
 }
 
 const HoldPattern = (parts: Expr[], self: Expr) => {
@@ -344,7 +342,7 @@ const Blank = (parts: Expr[], self: Expr) => {
   if (parts.length > 1) {
     throw errArgCount('Blank', "0 - 1", parts.length);
   }
-  if (parts.length == 1 && !(parts[0] instanceof Symbol)) {
+  if (parts.length == 1 && !isSymbol(parts[0])) {
     throw errArgType('Blank', ['a symbol']);
   }
 
@@ -422,7 +420,7 @@ const Set_ = (parts: Expr[]) => {
   }
 
   assign(parts[0], parts[1]);
-  return symbol('Null');
+  return sym('Null');
 }
 
 const SetDelayed = (parts: Expr[]) => {
@@ -431,7 +429,7 @@ const SetDelayed = (parts: Expr[]) => {
   }
 
   assign(parts[0], parts[1]);
-  return symbol('Null');
+  return sym('Null');
 }
 
 const OwnValues = (parts: Expr[]) => {
@@ -439,7 +437,7 @@ const OwnValues = (parts: Expr[]) => {
     throw errArgCount('OwnValues', 1, parts.length);
   }
 
-  if (!(parts[0] instanceof Symbol)) {
+  if (!isSymbol(parts[0])) {
     throw errArgType('OwnValues', ['a symbol']);
   }
 
@@ -451,7 +449,7 @@ const DownValues = (parts: Expr[]) => {
     throw errArgCount('DownValues', 1, parts.length);
   }
 
-  if (!(parts[0] instanceof Symbol)) {
+  if (!isSymbol(parts[0])) {
     throw errArgType('DownValues', ['a symbol']);
   }
 
@@ -461,7 +459,7 @@ const DownValues = (parts: Expr[]) => {
 const Clear = (parts: Expr[]) => {
   let doerr = false;
   for (const s of parts) {
-    if (!(s instanceof Symbol)) {
+    if (!isSymbol(s)) {
       doerr = true;
       continue;
     }
@@ -472,7 +470,7 @@ const Clear = (parts: Expr[]) => {
   if (doerr) {
     throw "Symbols only please."
   }
-  return symbol("Null");
+  return sym("Null");
 }
 
 /*
@@ -487,9 +485,9 @@ const Hold = (parts: Expr[], self: Expr) => {
 }
 
 const CompoundExpression = (parts: Expr[]) => {
-  let res: Expr = symbol("Null");
+  let res: Expr = sym("Null");
   for (const part of parts) {
-    res = part.eval(new Map());
+    res = eval_(part, new Map());
   }
   return res;
 }
@@ -499,13 +497,13 @@ const Do = (parts: Expr[]) => {
     throw errArgCount('Do', 2, parts.length);
   }
 
-  if (!(parts[1] instanceof Int)) {
+  if (!isInteger(parts[1])) {
     throw errArgType("Do", ["an integer"]);
   }
 
-  let res: Expr = symbol("Null");
+  let res: Expr = sym("Null");
   for (let i = 0; i < parts[1].val; i++) {
-    res = parts[0].eval(new Map());
+    res = eval_(parts[0], new Map());
   }
 
   return res;
@@ -519,11 +517,11 @@ const Timing = (parts: Expr[]) => {
   const env = new Map();
 
   const startTime = process.cpuUsage();
-  const res = parts[0].eval(env);
+  const res = eval_(parts[0], env);
   const diffTime = process.cpuUsage(startTime);
 
   const cpuInUs = diffTime.user + diffTime.system;
-  return new Form(symbol("List"), [new Int(cpuInUs / 1_000_000), res]);
+  return form(sym("List"), [int(cpuInUs / 1_000_000), res]);
 }
 
 /*

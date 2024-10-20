@@ -1,11 +1,10 @@
-import { Int, Form, Expr } from './ast';
+import { Integer, Form, Expr, isInteger } from './ast';
 import {
   seq, alpha, many, alnum, nat, either, sepBy,
   binop, binopr, stream, fwd, lex, parser, not,
   peek, maybe, some
 } from '@spakhm/ts-parsec';
-import { symbol } from './symbols';
-import { list } from './list';
+import { sym, list, form, int } from './ast';
 
 /*
   Grammar entry point.
@@ -17,60 +16,60 @@ export const expr = fwd(() => compoundExpr);
 */
 const compoundExpr = fwd(() => seq(assignment, many(seq(';', assignment).map2((_, e) => e)), maybe(';')).map2((e, es, t) => {
   if (es.length == 0 && !t) return e;
-  return new Form(symbol("CompoundExpression"), [e, ...es, ...(t ? [symbol("Null")] : [])])
+  return form(sym("CompoundExpression"), [e, ...es, ...(t ? [sym("Null")] : [])])
 }));
 
 const assignment = fwd(() => binopr(either('=', ':='), replace, (op, l, r: Expr): Form =>
-  new Form(symbol(op == '=' ? 'Set' : 'SetDelayed'), [l, r])));
+  form(sym(op == '=' ? 'Set' : 'SetDelayed'), [l, r])));
 
 const replace = fwd(() => binop(either('/.', '//.'), rule, (op, l: Expr, r): Form =>
-  new Form(symbol(op == '/.' ? 'ReplaceAll' : 'ReplaceRepeated'), [l, r])));
+  form(sym(op == '/.' ? 'ReplaceAll' : 'ReplaceRepeated'), [l, r])));
 
 const rule = fwd(() => binopr(either('->', ':>'), term, (op, l, r: Expr): Form =>
-  new Form(symbol(op == '->' ? 'Rule' : 'RuleDelayed'), [l, r])));
+  form(sym(op == '->' ? 'Rule' : 'RuleDelayed'), [l, r])));
 
 const term = fwd(() => binop(either('+', '-'), factor, (op, l: Expr, r): Form => {
   let right: Expr = r;
   if (op == '-') {
-    if (right instanceof Int) {
+    if (isInteger(right)) {
       right.val = -right.val;
     } else {
-      right = new Form(symbol('Times'), [new Int(-1), right]);
+      right = form(sym('Times'), [int(-1), right]);
     }
   }
-  return new Form(symbol('Plus'), [l, right]);
+  return form(sym('Plus'), [l, right]);
 }));
 
 const factor = fwd(() => binop(either('*', '/', peek(not(either('+', '-')))), exponent, (op, l: Expr, r): Form =>
-  new Form(symbol('Times'), [l, (op == '*' || op == null) ? r : new Form(
-    symbol('Power'), [r, new Int(-1)])])));
+  form(sym('Times'), [l, (op == '*' || op == null) ? r : form(
+    sym('Power'), [r, int(-1)])])));
 
 const exponent = fwd(() => binopr(either('^'), ptest, (_, l, r: Expr): Form =>
-  new Form(symbol('Power'), [l, r])));
+  form(sym('Power'), [l, r])));
 
 const ptest = fwd(() => binopr(either('?'), unaryMinus, (_, l, r: Expr): Form =>
-  new Form(symbol('PatternTest'), [l, r])));
+  form(sym('PatternTest'), [l, r])));
 
 const unaryMinus = fwd(() => seq(many(either('-', '+')), literal).map2((signs, expr) => {
   signs = signs.filter(s => s != '+');
   if (signs.length % 2 == 0) {
     return expr;
   } else {
-    return new Form(symbol("Minus"), [expr]);
+    return form(sym("Minus"), [expr]);
   }
 }));
 
 /*
   Literals (forms & non-forms)
 */
-const literal = fwd(() => either(form, nonFormLiteral));
+const literal = fwd(() => either(form_, nonFormLiteral));
 
 /*
   Forms
 */
-const form = fwd(() => seq(nonFormLiteral, some(formTail)).map2<Form>((head, tails) =>
+const form_ = fwd(() => seq(nonFormLiteral, some(formTail)).map2<Form>((head, tails) =>
   tails.slice(1).reduce((acc, tail) =>
-    new Form(acc, tail), new Form(head, tails[0]))));
+    form(acc, tail), form(head, tails[0]))));
 
 const formTail = (source: stream) => {
   const p: parser<Expr[]> = seq('[', sepBy(expr, ','), ']').map2((_, parts) => parts);
@@ -93,13 +92,13 @@ const list_expr = (source: stream) => {
 }
 
 const pattern = fwd(() => lex(seq(symbol_, blank).map2((s, b) =>
-  new Form(symbol('Pattern'), [s, b]))));
+  form(sym('Pattern'), [s, b]))));
 
 const blank = fwd(() => lex(seq('_', maybe(symbol_)).map2((_, s) =>
-  new Form(symbol('Blank'), s ? [s] : []))));
+  form(sym('Blank'), s ? [s] : []))));
 
 const symbol_ = lex(seq(alpha, many(alnum)).map2((ft, rt) =>
-  symbol([ft, ...rt].join(""))));
+  sym([ft, ...rt].join(""))));
 
-const integer = nat.map<Int>(val =>
-  new Int(val));
+const integer = nat.map<Integer>(val =>
+  int(val));

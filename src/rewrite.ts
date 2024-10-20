@@ -1,6 +1,5 @@
-import { Form, Expr, Symbol, Int } from "./ast"
+import { Form, Expr, Symbol, eval_, isForm, isSymbol, isInteger, form, sym } from "./ast"
 import { Head } from "./builtins";
-import { symbol } from "./symbols";
 
 export type Env = Map<Symbol, Expr>;
 
@@ -8,32 +7,32 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
   let env: Env = new Map();
 
   // Treat `HoldPattern` specially
-  if (p instanceof Form && p.head instanceof Symbol && p.head.val == 'HoldPattern') {
+  if (isForm(p) && isSymbol(p.head) && p.head.val == 'HoldPattern') {
     p = p.parts[0];
   }
 
   // match patterns first
-  if (isBlank(p)) {
+  if (isForm(p) && isBlank(p)) {
     return [matchBlank(e, p), env];
   }
-  if (isPattern(p)) {
-    return matchPattern(e,p);
+  if (isForm(p) && isPattern(p)) {
+    return matchPattern(e, p);
   }
 
-  if (isPatternTest(p)) {
-    return matchPatternTest(e,p);
+  if (isForm(p) && isPatternTest(p)) {
+    return matchPatternTest(e, p);
   }
 
   // The rest is essentially deepEqual
-  if (e instanceof Int && p instanceof Int) {
+  if (isInteger(e) && isInteger(p)) {
     return [p.val == e.val, env];
   }
   
-  if (e instanceof Symbol && p instanceof Symbol) {
+  if (isSymbol(e) && isSymbol(p)) {
     return [p == e, env];
   }
   
-  if (e instanceof Form && p instanceof Form) {
+  if (isForm(e) && isForm(p)) {
     if (e.parts.length != p.parts.length) { return [false, env]; }
     
     const eparts = [e.head, ...e.parts];
@@ -52,11 +51,11 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
   return [false, env];
 }
 
-export const isBlank = (e: Expr): e is Form =>
-  e instanceof Form && e.head instanceof Symbol && e.head.val == 'Blank';
+export const isBlank = (e: Expr) =>
+  isForm(e) && isSymbol(e.head) && e.head.val == 'Blank';
 
 const matchBlank = (e: Expr, p: Form): boolean => {
-  if (!(p.head instanceof Symbol && p.head.val == 'Blank')) {
+  if (!(isSymbol(p.head) && p.head.val == 'Blank')) {
     return false;
   }
 
@@ -67,13 +66,14 @@ const matchBlank = (e: Expr, p: Form): boolean => {
   return Head([e]) == p.parts[0];
 }
 
-export const isPattern = (e: Expr): e is Form =>
-  e instanceof Form && e.head instanceof Symbol && e.head.val == 'Pattern';
+export const isPattern = (e: Expr) =>
+  isForm(e) && isSymbol(e.head) && e.head.val == 'Pattern';
 
 const matchPattern = (e: Expr, p: Form): [boolean, Env] => {
   const env: Env = new Map();
-  if (!isBlank(p.parts[1])
-    || !(p.parts[0] instanceof Symbol))
+  if (!isSymbol(p.parts[0])
+    || !isForm(p.parts[1])
+    || !isBlank(p.parts[1]))
   {
     throw "ThisShouldNeverHappenException:)";
   }
@@ -85,8 +85,8 @@ const matchPattern = (e: Expr, p: Form): [boolean, Env] => {
   return [true, env];
 }
 
-export const isPatternTest = (e: Expr): e is Form =>
-  e instanceof Form && e.head instanceof Symbol && e.head.val == 'PatternTest';
+export const isPatternTest = (e: Expr) =>
+  isForm(e) && isSymbol(e.head) && e.head.val == 'PatternTest';
 
 const matchPatternTest = (e: Expr, p: Form): [boolean, Env] => {
   const [matchedp, env] = match(e, p.parts[0]);
@@ -94,8 +94,8 @@ const matchPatternTest = (e: Expr, p: Form): [boolean, Env] => {
     return [false, env];
   }
 
-  const testForm = new Form(p.parts[1], [e]);
-  const passedp = testForm.eval(env) == symbol('True');
+  const testForm = form(p.parts[1], [e]);
+  const passedp = eval_(testForm, env) == sym('True');
 
   return [passedp, env];
 }
@@ -121,7 +121,7 @@ export const replace = (expr: Expr, rules: [Expr, Expr][]): [boolean, Expr] => {
   for (const [lhs, rhs] of rules) {
     const [matchesp, env] = match(expr, lhs);
     if (matchesp) {
-      return [true, rhs.eval(env)];
+      return [true, eval_(rhs, env)];
     }
   }
 
@@ -131,11 +131,11 @@ export const replace = (expr: Expr, rules: [Expr, Expr][]): [boolean, Expr] => {
 export const replaceAll = (expr: Expr,  rules: [Expr, Expr][]): Expr => {
   // try the whole expression first
   const [replacedp, res] = replace(expr, rules);
-  if (replacedp || !(expr instanceof Form)) {
+  if (replacedp || !isForm(expr)) {
     return res;
   }
 
-  return new Form(
+  return form(
     replaceAll(expr.head, rules),
     expr.parts.map(part => replaceAll(part, rules)),
   );
@@ -159,7 +159,7 @@ export const replaceRepeated = (expr: Expr,  rules: [Expr, Expr][]): Expr => {
 }
 
 export const ruleToPair = (rule: Expr): [Expr, Expr] => {
-  if (isRule(rule)) {
+  if (isForm(rule) && isRule(rule)) {
     return [rule.parts[0], rule.parts[1]];
   }
   throw "Expected a rule";
@@ -168,7 +168,4 @@ export const ruleToPair = (rule: Expr): [Expr, Expr] => {
 export const rulesToPairs = (rules: Expr[]) => rules.map(ruleToPair);
 
 export const isRule = (e: Expr): e is Form =>
-  e instanceof Form
-  && e.head instanceof Symbol
-  && ["Rule", "RuleDelayed"].includes(e.head.val);
-
+  isForm(e) && isSymbol(e.head) && ["Rule", "RuleDelayed"].includes(e.head.val);

@@ -1,7 +1,6 @@
-import { Symbol, Expr, Form } from './ast';
+import { Symbol, Expr, isSymbol, isForm, form, sym } from './ast';
 import { attrs } from './attrs';
 import { isRule } from './rewrite';
-import { symbol } from './symbols';
 
 export const ownValues: Map<Symbol, Expr[]> = new Map();
 export const downValues: Map<Symbol, Expr[]> = new Map();
@@ -17,26 +16,26 @@ export const withUnprotected = (fn: (() => unknown)) => {
 
 export const assign = (lhs: Expr, rhs: Expr) => {
   let values: Map<Symbol, Expr[]>;
-  let sym: Symbol;
-  if (lhs instanceof Symbol) {
+  let sym_: Symbol;
+  if (isSymbol(lhs)) {
     values = ownValues;
-    sym = lhs;
-  } else if (lhs instanceof Form && lhs.head instanceof Symbol) {
+    sym_ = lhs;
+  } else if (isForm(lhs) && isSymbol(lhs.head)) {
     values = downValues;
-    sym = lhs.head;
+    sym_ = lhs.head;
   } else {
     throw "Symbol or form expected";
   }
 
-  if (shouldCheckProtected && attrs(sym).includes(symbol("Protected"))) {
+  if (shouldCheckProtected && attrs(sym_).includes(sym("Protected"))) {
     throw "Can't modify protected symbol";
   }
 
-  const newRule = new Form(symbol('RuleDelayed'), [
-    new Form(symbol('HoldPattern'), [lhs]),
+  const newRule = form(sym('RuleDelayed'), [
+    form(sym('HoldPattern'), [lhs]),
     rhs,
   ]);
-  values.set(sym, withRule(values.get(sym) || [], newRule));
+  values.set(sym_, withRule(values.get(sym_) || [], newRule));
 }
 
 const withRule = (rules: Expr[], newRule: Expr): Expr[] => {

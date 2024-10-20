@@ -1,5 +1,5 @@
 import type { Symbol } from './ast';
-import { symbol } from './symbols';
+import { sym } from './ast';
 
 type AttrVec = {
   holdFirst: boolean,
@@ -14,17 +14,17 @@ const supported = ['HoldFirst', 'HoldRest', 'HoldAll', 'Protected', 'Flat'];
 /*
   Get attributes
 */
-export const attrs = (sym: Symbol) => {
-  const attrVec = getVec(sym);
+export const attrs = (sym_: Symbol) => {
+  const attrVec = getVec(sym_);
   const attrs_: Symbol[] = [];
   if (attrVec.holdFirst && attrVec.holdRest) {
-    attrs_.push(symbol('HoldAll'));
+    attrs_.push(sym('HoldAll'));
   } else {
-    if (attrVec.holdFirst) { attrs_.push(symbol('HoldFirst')); }
-    if (attrVec.holdRest) { attrs_.push(symbol('HoldRest')); }
+    if (attrVec.holdFirst) { attrs_.push(sym('HoldFirst')); }
+    if (attrVec.holdRest) { attrs_.push(sym('HoldRest')); }
   }
-  if (attrVec.protected) { attrs_.push(symbol('Protected')); }
-  if (attrVec.flat) { attrs_.push(symbol('Flat')); }
+  if (attrVec.protected) { attrs_.push(sym('Protected')); }
+  if (attrVec.flat) { attrs_.push(sym('Flat')); }
   return attrs_;
 }
 
@@ -72,13 +72,12 @@ export const clearAttrs = (sym: Symbol, attrs_: Symbol[]) => {
   attrsTable.set(sym, attrVec);
 }
 
-
 /*
   Utils
 */
-const validate = (sym: Symbol) => {
-  if (!supported.map(symbol).includes(sym)) {
-    throw `${sym.val} is not a known attribute.`;
+const validate = (sym_: Symbol) => {
+  if (!supported.map(sym).includes(sym_)) {
+    throw `${sym_.val} is not a known attribute.`;
   }
 }
 

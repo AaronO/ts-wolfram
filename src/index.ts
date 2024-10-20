@@ -2,7 +2,7 @@ import { createInterface, Interface } from 'readline';
 import { expr } from './grammar';
 import { fromString } from '@spakhm/ts-parsec';
 import { populateBuiltins } from './builtins';
-import { symbol } from './symbols';
+import { eval_, repr, sym } from './ast';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { withUnprotected } from './values';
@@ -20,7 +20,7 @@ const main = async () => {
   if (prelude.type == 'err') {
     throw "Couldn't load prelude";
   }
-  withUnprotected(() => prelude.res.eval(new Map()));
+  withUnprotected(() => eval_(prelude.res, new Map()));
 
   const rl = createInterface({
     input: process.stdin,
@@ -37,9 +37,9 @@ const main = async () => {
     }
     
     try {
-      const evaled = parsed.res.eval(emptyEnv);
-      if (evaled != symbol('Null')) {
-        console.log(evaled.repr());
+      const evaled = eval_(parsed.res, emptyEnv);
+      if (evaled != sym('Null')) {
+        console.log(repr(evaled));
       }
     } catch (err) {
       console.log(err);

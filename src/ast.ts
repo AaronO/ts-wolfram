@@ -1,104 +1,150 @@
 import { attrs } from './attrs';
-import { symbol } from './symbols';
 import { builtin } from './builtins';
 import { replaceRepeated, rulesToPairs, Env } from './rewrite';
 import { downValues, ownValues } from './values';
-import { isSymbol } from 'lodash';
 
-export type Expr = Form | Symbol | Int;
+export type Expr = Integer | Symbol | Form;
 
-export interface Node {
-  eval: (localEnv: Env) => Expr,
-  repr: () => string,
+export enum Types {
+  Form, Integer, Symbol,
 }
 
-export class Form implements Node {
-  constructor(
-    public head: Expr,
-    public parts: Expr[],
-  ) {}
+export type Form = {
+  type: Types.Form,
+  head: Expr,
+  parts: Expr[],
+}
 
-  eval(localEnv: Env): Expr {
-    const head_ = this.head.eval(localEnv);
-    
-    let parts_: Expr[];
-    if (head_ instanceof Symbol && this.parts.length > 0) {
-      const first =
-        (attrs(head_).includes(symbol("HoldFirst"))
-        || attrs(head_).includes(symbol("HoldAll")))
-          ? this.parts[0] : this.parts[0].eval(localEnv);
+export type Integer = {
+  type: Types.Integer,
+  val: number,
+}
 
-      const rest =
-        (attrs(head_).includes(symbol("HoldRest"))
-        || attrs(head_).includes(symbol("HoldAll")))
-          ? this.parts.slice(1) : this.parts.slice(1).map(el => el.eval(localEnv));
+export type Symbol = {
+  type: Types.Symbol,
+  val: string,
+}
 
-      parts_ = [first, ...rest];
-    } else {
-      parts_ = this.parts.map(el => el.eval(localEnv));
-    }
+const symtable: Map<string, Symbol> = new Map();
 
-    if (!(head_ instanceof Symbol)) {
-      return new Form(head_, parts_);
-    }
+export const isForm = (e: Expr): e is Form => e.type == Types.Form;
+export const isInteger = (e: Expr): e is Integer => e.type == Types.Integer;
+export const isSymbol = (e: Expr): e is Symbol => e.type == Types.Symbol;
 
-    if (attrs(head_).includes(symbol("Flat"))) {
-      let parts2: Expr[] = [];
-      for (const part of parts_) {
-        if (part instanceof Form && part.head instanceof Symbol && part.head.val === head_.val) {
-          parts2 = [...parts2, ...part.parts];
-        } else {
-          parts2 = [...parts2, part];
-        }
+export const form = (head: Expr, parts: Expr[]): Form => ({
+  type: Types.Form,
+  head, parts,
+});
+
+export const int = (val: number): Integer => ({
+  type: Types.Integer,
+  val,
+});
+
+export const sym = (val: string): Symbol => {
+  let sym_ = symtable.get(val);
+  if (sym_) {
+    return sym_;
+  } else {
+    sym_ = {
+      type: Types.Symbol,
+      val,
+    };
+    symtable.set(val, sym_);
+    return sym_;
+  }
+};
+
+export const list = (els: Expr[]) => form(sym("List"), els);
+export const isList = (e: Expr): e is Form => isForm(e) && isSymbol(e.head) && e.head.val == "List";
+
+export type Dispatch<T> = {
+  Integer: (i: Integer) => T,
+  Symbol: (s: Symbol) => T
+  Form: (f: Form) => T,
+}
+
+export const match = <T>(e: Expr, d: Dispatch<T>): T => {
+  if (e.type == Types.Integer) {
+    return d.Integer(e);
+  } else if (e.type == Types.Symbol) {
+    return d.Symbol(e);
+  } else if (e.type == Types.Form) {
+    return d.Form(e);
+  }
+  throw "Unknown type";
+}
+
+export const repr = (e: Expr): string => match(e, {
+  Integer: e => e.val.toString(),
+  Symbol: e => e.val,
+  Form: e => `${repr(e.head)}[${e.parts.map(x => repr(x)).join(", ")}]`,
+});
+
+export const eval_ = (e: Expr, lenv: Env): Expr => match(e, {
+  Integer: e => e,
+  Symbol: e => evalSym(e, lenv),
+  Form: e => evalForm(e, lenv),
+});
+
+const evalSym = (sym: Symbol, localEnv: Env): Expr => {
+  if (localEnv.has(sym)) {
+    return localEnv.get(sym)!;
+  }
+
+  const ownvals = ownValues.get(sym);
+  return ownvals ? replaceRepeated(sym, rulesToPairs(ownvals)) : sym;
+}
+
+const evalForm = (f: Form, lenv: Env): Expr => {
+  const head_ = eval_(f.head, lenv);
+  
+  let parts_: Expr[];
+  if (isSymbol(head_) && f.parts.length > 0) {
+    const first =
+      (attrs(head_).includes(sym("HoldFirst"))
+      || attrs(head_).includes(sym("HoldAll")))
+        ? f.parts[0] : eval_(f.parts[0], lenv);
+
+    const rest =
+      (attrs(head_).includes(sym("HoldRest"))
+      || attrs(head_).includes(sym("HoldAll")))
+        ? f.parts.slice(1) : f.parts.slice(1).map(el => eval_(el, lenv));
+
+    parts_ = [first, ...rest];
+  } else {
+    parts_ = f.parts.map(el => eval_(el, lenv));
+  }
+
+  if (!(isSymbol(head_))) {
+    return form(head_, parts_);
+  }
+
+  if (attrs(head_).includes(sym("Flat"))) {
+    let parts2: Expr[] = [];
+    for (const part of parts_) {
+      if (isForm(part) && isSymbol(part.head) && part.head.val === head_.val) {
+        parts2 = [...parts2, ...part.parts];
+      } else {
+        parts2 = [...parts2, part];
       }
-      parts_ = parts2;
     }
+    parts_ = parts2;
+  }
 
-    let evaled: Expr = new Form(head_, parts_);
+  let evaled: Expr = form(head_, parts_);
 
-    // check DownValues
-    const downvals = downValues.get(head_);
-    evaled = downvals ? replaceRepeated(evaled, rulesToPairs(downvals)) : evaled;
+  // check DownValues
+  const downvals = downValues.get(head_);
+  evaled = downvals ? replaceRepeated(evaled, rulesToPairs(downvals)) : evaled;
 
-    // Check builtins
-    if (evaled instanceof Form && evaled.head instanceof Symbol) {
-      const fn = builtin(evaled.head);
-      if (fn) {
-        evaled = fn(evaled.parts, evaled);
-      }
+  // Check builtins
+  if (isForm(evaled) && isSymbol(evaled.head)) {
+    const fn = builtin(evaled.head);
+    if (fn) {
+      evaled = fn(evaled.parts, evaled);
     }
-
-    return evaled;
-  };
-
-  repr(): string {
-    return `${this.head.repr()}[${this.parts.map(x => x.repr()).join(", ")}]`;
-  }
-}
-
-export class Symbol implements Node {
-  constructor(public val: string) {}
-  eval (localEnv: Env): Expr {
-    if (localEnv.has(this)) {
-      return localEnv.get(this)!;
-    }
-
-    const ownvals = ownValues.get(this);
-    return ownvals ? replaceRepeated(this, rulesToPairs(ownvals)) : this;
   }
 
-  repr (): string {
-    return this.val;
-  }
-}
-
-export class Int implements Node {
-  constructor(public val: number) {}
-  eval(): Expr {
-    return this;
-  }
-
-  repr (): string {
-    return this.val.toString();
-  }
-}
+  return evaled;
+};
