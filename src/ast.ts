@@ -1,7 +1,7 @@
-import { attrs } from './attrs';
 import { builtin } from './builtins';
 import { replaceRepeated, rulesToPairs, Env } from './rewrite';
 import { downValues, ownValues } from './values';
+import type { AttrVec } from './attrs';
 
 export type Expr = Integer | Symbol | Form;
 
@@ -23,6 +23,7 @@ export type Integer = {
 export type Symbol = {
   type: Types.Symbol,
   val: string,
+  attrs: AttrVec,
 }
 
 const symtable: Map<string, Symbol> = new Map();
@@ -49,6 +50,7 @@ export const sym = (val: string): Symbol => {
     sym_ = {
       type: Types.Symbol,
       val,
+      attrs: {},
     };
     symtable.set(val, sym_);
     return sym_;
@@ -109,15 +111,11 @@ const evalForm = (f: Form, lenv: Env): Expr => {
   
   let parts_: Expr[];
   if (isSymbol(head_) && f.parts.length > 0) {
-    const first =
-      (attrs(head_).includes(sym("HoldFirst"))
-      || attrs(head_).includes(sym("HoldAll")))
-        ? f.parts[0] : eval_(f.parts[0], lenv);
+    const first = head_.attrs.holdFirst
+      ? f.parts[0] : eval_(f.parts[0], lenv);
 
-    const rest =
-      (attrs(head_).includes(sym("HoldRest"))
-      || attrs(head_).includes(sym("HoldAll")))
-        ? f.parts.slice(1) : f.parts.slice(1).map(el => eval_(el, lenv));
+    const rest = head_.attrs.holdRest
+      ? f.parts.slice(1) : f.parts.slice(1).map(el => eval_(el, lenv));
 
     parts_ = [first, ...rest];
   } else {
@@ -128,7 +126,7 @@ const evalForm = (f: Form, lenv: Env): Expr => {
     return form(head_, parts_);
   }
 
-  if (attrs(head_).includes(sym("Flat"))) {
+  if (head_.attrs.flat) {
     let parts2: Expr[] = [];
     for (const part of parts_) {
       if (isForm(part) && isSymbol(part.head) && part.head.val === head_.val) {

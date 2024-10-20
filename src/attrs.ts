@@ -1,13 +1,12 @@
 import type { Symbol } from './ast';
 import { sym } from './ast';
 
-type AttrVec = {
-  holdFirst: boolean,
-  holdRest: boolean,
-  protected: boolean,
-  flat: boolean,
+export type AttrVec = {
+  holdFirst?: boolean,
+  holdRest?: boolean,
+  protected?: boolean,
+  flat?: boolean,
 }
-const attrsTable: Map<Symbol, AttrVec> = new Map();
 
 const supported = ['HoldFirst', 'HoldRest', 'HoldAll', 'Protected', 'Flat'];
 
@@ -15,7 +14,7 @@ const supported = ['HoldFirst', 'HoldRest', 'HoldAll', 'Protected', 'Flat'];
   Get attributes
 */
 export const attrs = (sym_: Symbol) => {
-  const attrVec = getVec(sym_);
+  const attrVec = sym_.attrs;
   const attrs_: Symbol[] = [];
   if (attrVec.holdFirst && attrVec.holdRest) {
     attrs_.push(sym('HoldAll'));
@@ -36,7 +35,7 @@ export const setAttrs = (sym: Symbol, attrs_: Symbol[]) => {
     validate(attr);
   }
 
-  const attrVec = getVec(sym);
+  const attrVec = sym.attrs;
   for (const attr of attrs_) {
     if (attr.val == 'HoldFirst') { attrVec.holdFirst = true; }
     if (attr.val == 'HoldRest') { attrVec.holdRest = true; }
@@ -47,7 +46,7 @@ export const setAttrs = (sym: Symbol, attrs_: Symbol[]) => {
     if (attr.val == 'Protected') { attrVec.protected = true; }
     if (attr.val == 'Flat') { attrVec.flat = true; }
   }
-  attrsTable.set(sym, attrVec);
+  sym.attrs = attrVec;
 }
 
 /*
@@ -58,7 +57,7 @@ export const clearAttrs = (sym: Symbol, attrs_: Symbol[]) => {
     validate(attr);
   }
 
-  const attrVec = getVec(sym);
+  const attrVec = sym.attrs;
   for (const attr of attrs_) {
     if (attr.val == 'HoldFirst') { attrVec.holdFirst = false; }
     if (attr.val == 'HoldRest') { attrVec.holdRest = false; }
@@ -69,7 +68,7 @@ export const clearAttrs = (sym: Symbol, attrs_: Symbol[]) => {
     if (attr.val == 'Protected') { attrVec.protected = false; }
     if (attr.val == 'Flat') { attrVec.flat = false; }
   }
-  attrsTable.set(sym, attrVec);
+  sym.attrs = attrVec;
 }
 
 /*
@@ -80,10 +79,3 @@ const validate = (sym_: Symbol) => {
     throw `${sym_.val} is not a known attribute.`;
   }
 }
-
-const getVec = (sym: Symbol) => attrsTable.get(sym) || {
-  holdFirst: false,
-  holdRest: false,
-  protected: false,
-  flat: false,
-};
