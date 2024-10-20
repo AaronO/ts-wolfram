@@ -2,9 +2,9 @@ import { Integer, Form, Expr, isInteger } from './ast';
 import {
   seq, alpha, many, alnum, nat, either, sepBy,
   binop, binopr, stream, fwd, lex, parser, not,
-  peek, maybe, some
+  peek, maybe, some, anych
 } from '@spakhm/ts-parsec';
-import { sym, list, form, int } from './ast';
+import { sym, list, form, int, str } from './ast';
 
 /*
   Grammar entry point.
@@ -44,9 +44,12 @@ const factor = fwd(() => binop(either('*', '/', peek(not(either('+', '-')))), ex
   form(sym('Times'), [l, (op == '*' || op == null) ? r : form(
     sym('Power'), [r, int(-1)])])));
 
-const exponent = fwd(() => binopr(either('^'), ptest, (_, l, r: Expr): Form =>
+const exponent = fwd(() => binopr('^', concat, (_, l, r: Expr): Form =>
   form(sym('Power'), [l, r])));
 
+const concat = fwd(() => binop('<>', ptest, (_, l: Expr, r): Form =>
+  form(sym('StringJoin'), [l, r])));
+    
 const ptest = fwd(() => binopr(either('?'), unaryMinus, (_, l, r: Expr): Form =>
   form(sym('PatternTest'), [l, r])));
 
@@ -79,7 +82,7 @@ const formTail = (source: stream) => {
 /*
   Non-forms: (expr), lists, patterns, blanks, symbols, integers
 */
-const nonFormLiteral = fwd(() => either(paren_expr, list_expr, pattern, blank, symbol_, integer));
+const nonFormLiteral = fwd(() => either(paren_expr, list_expr, pattern, blank, symbol_, integer, string_));
 
 const paren_expr = (source: stream) => {
   const p: parser<Expr> = seq('(', expr, ')').map2((_, e) => e);
@@ -99,6 +102,9 @@ const blank = fwd(() => lex(seq('_', maybe(symbol_)).map2((_, s) =>
 
 const symbol_ = lex(seq(alpha, many(alnum)).map2((ft, rt) =>
   sym([ft, ...rt].join(""))));
+
+const string_ = lex(seq('"', many(seq(not(peek('"')), anych).map2((_, c) => c)), '"').map2((_, cs) =>
+  str(cs.join(""))));
 
 const integer = nat.map<Integer>(val =>
   int(val));

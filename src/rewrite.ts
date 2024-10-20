@@ -1,4 +1,4 @@
-import { Form, Expr, Symbol, eval_, isForm, isSymbol, isInteger, form, sym } from "./ast"
+import { Form, Expr, Symbol, eval_, isForm, isSymbol, isInteger, isString, form, sym } from "./ast"
 import { Head } from "./builtins";
 
 export type Env = Map<Symbol, Expr>;
@@ -25,6 +25,10 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
 
   // The rest is essentially deepEqual
   if (isInteger(e) && isInteger(p)) {
+    return [p.val == e.val, env];
+  }
+  
+  if (isString(e) && isString(p)) {
     return [p.val == e.val, env];
   }
   

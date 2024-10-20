@@ -3,10 +3,10 @@ import { replaceRepeated, rulesToPairs, Env } from './rewrite';
 import { downValues, ownValues } from './values';
 import type { AttrVec } from './attrs';
 
-export type Expr = Integer | Symbol | Form;
+export type Expr = Integer | Symbol | Form | String;
 
 export enum Types {
-  Form, Integer, Symbol,
+  Form, Integer, Symbol, String,
 }
 
 export type Form = {
@@ -26,10 +26,16 @@ export type Symbol = {
   attrs: AttrVec,
 }
 
+export type String = {
+  type: Types.String,
+  val: string,
+}
+
 const symtable: Map<string, Symbol> = new Map();
 
 export const isForm = (e: Expr): e is Form => e.type == Types.Form;
 export const isInteger = (e: Expr): e is Integer => e.type == Types.Integer;
+export const isString = (e: Expr): e is String => e.type == Types.String;
 export const isSymbol = (e: Expr): e is Symbol => e.type == Types.Symbol;
 
 export const form = (head: Expr, parts: Expr[]): Form => ({
@@ -39,6 +45,11 @@ export const form = (head: Expr, parts: Expr[]): Form => ({
 
 export const int = (val: number): Integer => ({
   type: Types.Integer,
+  val,
+});
+
+export const str = (val: string): String => ({
+  type: Types.String,
   val,
 });
 
@@ -63,34 +74,40 @@ export const isList = (e: Expr): e is Form => isForm(e) && isSymbol(e.head) && e
 export type Dispatch<T> = {
   Integer: (i: Integer) => T,
   Symbol: (s: Symbol) => T
+  String: (s: String) => T,
   Form: (f: Form) => T,
 }
 
-export const match = <T>(e: Expr, d: Dispatch<T>): T => {
+export const dispatch = <T>(e: Expr, d: Dispatch<T>): T => {
   if (e.type == Types.Integer) {
     return d.Integer(e);
   } else if (e.type == Types.Symbol) {
     return d.Symbol(e);
   } else if (e.type == Types.Form) {
     return d.Form(e);
+  } else if (e.type == Types.String) {
+    return d.String(e);
   }
   throw "Unknown type";
 }
 
-export const repr = (e: Expr): string => match(e, {
+export const repr = (e: Expr): string => dispatch(e, {
   Integer: e => e.val.toString(),
   Symbol: e => e.val,
+  String: e => e.val,
   Form: e => `${repr(e.head)}[${e.parts.map(x => repr(x)).join(", ")}]`,
 });
 
 export const eval_ = (e: Expr, lenv: Env): Expr => {
-  // We don't use `match` to make `eval_` implementation
-  // pretty like `repr`, because `match` is about 7 times
+  // We don't use `dispatch` to make `eval_` implementation
+  // pretty like `repr`, because `dispatch` is about 7 times
   // slower than branching like this.
   if (e.type == Types.Integer) {
     return e;
   } else if (e.type == Types.Symbol) {
     return evalSym(e, lenv);
+  } else if (e.type == Types.String) {
+    return e;
   } else if (e.type == Types.Form) {
     return evalForm(e, lenv);
   }

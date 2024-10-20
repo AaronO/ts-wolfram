@@ -1,4 +1,4 @@
-import { Symbol, Expr, isSymbol, isInteger, sym, list, isList, int, form, isForm, eval_ } from './ast';
+import { Symbol, Expr, isSymbol, isInteger, sym, list, isList, int, form, isForm, eval_, isString, dispatch, Form, str, repr } from './ast';
 import { attrs, setAttrs, clearAttrs } from './attrs';
 import { match, replace, replaceAll, replaceRepeated, isRule } from './rewrite';
 import { assign, ownValues, downValues, withUnprotected } from './values';
@@ -104,6 +104,13 @@ const populateBuiltins_ = () => {
 
   builtinsTable.set(sym('Timing'), Timing);
   setAttrs(sym('Timing'), ["HoldAll", "Protected"].map(sym));
+
+  // Misc
+  builtinsTable.set(sym('ToString'), ToString);
+  setAttrs(sym('ToString'), ["Protected"].map(sym));
+
+  builtinsTable.set(sym('StringJoin'), StringJoin);
+  setAttrs(sym('StringJoin'), ["Flat", "Protected"].map(sym));
 }
 
 /*
@@ -282,15 +289,12 @@ export const Head = (parts: Expr[]) => {
   }
 
   const e = parts[0];
-  if (isInteger(e)) {
-    return sym("Integer");
-  } else if (isSymbol(e)) {
-    return sym("Symbol");
-  } else if (isForm(e)) {
-    return e.head;
-  }
-
-  throw "ThisShouldNeverHappenException:)"
+  return dispatch(e, {
+    Integer: () => sym("Integer"),
+    Symbol: () => sym("Symbol"),
+    String: () => sym("String"),
+    Form: () => (e as Form).head,
+  });
 }
 
 /*
@@ -523,6 +527,26 @@ const Timing = (parts: Expr[]) => {
 
   const cpuInUs = diffTime.user + diffTime.system;
   return form(sym("List"), [int(cpuInUs / 1_000_000), res]);
+}
+
+/*
+  Misc
+*/
+const ToString = (parts: Expr[]) => {
+  if (parts.length != 1) {
+    throw errArgCount('ToString', 1, parts.length);
+  }
+
+  return str(repr(parts[0]));
+}
+
+const StringJoin = (parts: Expr[]) => {
+  return str(parts.map(p => {
+    if (!isString(p)) {
+      throw errArgType('StringJoin', ['a String']);
+    }
+    return p.val
+  }).join(''));
 }
 
 /*
