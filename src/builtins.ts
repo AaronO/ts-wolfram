@@ -501,9 +501,10 @@ const Do = (parts: Expr[]) => {
     throw errArgType("Do", ["an integer"]);
   }
 
+  const emptyEnv = new Map();
   let res: Expr = sym("Null");
   for (let i = 0; i < parts[1].val; i++) {
-    res = eval_(parts[0], new Map());
+    res = eval_(parts[0], emptyEnv);
   }
 
   return res;
