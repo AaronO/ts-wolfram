@@ -17,6 +17,8 @@ const reprForm = (f: Form) => {
     res = f.parts.map(reprMaybeParenExpr).join(" + ");
   } else if (isSymbol(f.head, "Times")) {
     res = f.parts.map(reprMaybeParenExpr).join(" ");
+  } else if (isSymbol(f.head, "List")) {
+    res = `{${f.parts.map(repr).join(", ")}}`;
   }
 
   return res;
