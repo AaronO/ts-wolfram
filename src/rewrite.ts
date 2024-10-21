@@ -7,7 +7,7 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
   let env: Env = new Map();
 
   // Treat `HoldPattern` specially
-  if (isForm(p) && isSymbol(p.head) && p.head.val == 'HoldPattern') {
+  if (isForm(p) && isSymbol(p.head, "HoldPattern")) {
     p = p.parts[0];
   }
 
@@ -56,10 +56,10 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
 }
 
 export const isBlank = (e: Expr) =>
-  isForm(e) && isSymbol(e.head) && e.head.val == 'Blank';
+  isForm(e) && isSymbol(e.head, "Blank");
 
 const matchBlank = (e: Expr, p: Form): boolean => {
-  if (!(isSymbol(p.head) && p.head.val == 'Blank')) {
+  if (!isSymbol(p.head, "Blank")) {
     return false;
   }
 
@@ -71,7 +71,7 @@ const matchBlank = (e: Expr, p: Form): boolean => {
 }
 
 export const isPattern = (e: Expr) =>
-  isForm(e) && isSymbol(e.head) && e.head.val == 'Pattern';
+  isForm(e) && isSymbol(e.head, "Pattern");
 
 const matchPattern = (e: Expr, p: Form): [boolean, Env] => {
   const env: Env = new Map();
@@ -90,7 +90,7 @@ const matchPattern = (e: Expr, p: Form): [boolean, Env] => {
 }
 
 export const isPatternTest = (e: Expr) =>
-  isForm(e) && isSymbol(e.head) && e.head.val == 'PatternTest';
+  isForm(e) && isSymbol(e.head, "PatternTest");
 
 const matchPatternTest = (e: Expr, p: Form): [boolean, Env] => {
   const [matchedp, env] = match(e, p.parts[0]);

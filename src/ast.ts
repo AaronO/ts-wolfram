@@ -36,7 +36,15 @@ const symtable: Map<string, Symbol> = new Map();
 export const isForm = (e: Expr): e is Form => e.type == Types.Form;
 export const isInteger = (e: Expr): e is Integer => e.type == Types.Integer;
 export const isString = (e: Expr): e is String => e.type == Types.String;
-export const isSymbol = (e: Expr): e is Symbol => e.type == Types.Symbol;
+export const isSymbol = (e: Expr, s?: string): e is Symbol => {
+  if (e.type != Types.Symbol) {
+    return false;
+  }
+  if (s && e.val != s) {
+    return false;
+  }
+  return true;
+}
 
 export const form = (head: Expr, parts: Expr[]): Form => ({
   type: Types.Form,
@@ -69,7 +77,7 @@ export const sym = (val: string): Symbol => {
 };
 
 export const list = (els: Expr[]) => form(sym("List"), els);
-export const isList = (e: Expr): e is Form => isForm(e) && isSymbol(e.head) && e.head.val == "List";
+export const isList = (e: Expr): e is Form => isForm(e) && isSymbol(e.head, "List");
 
 export type Dispatch<T> = {
   Integer: (i: Integer) => T,
@@ -146,7 +154,7 @@ const evalForm = (f: Form, lenv: Env): Expr => {
   if (head_.attrs.flat) {
     let parts2: Expr[] = [];
     for (const part of parts_) {
-      if (isForm(part) && isSymbol(part.head) && part.head.val === head_.val) {
+      if (isForm(part) && part.head === head_) {
         parts2 = [...parts2, ...part.parts];
       } else {
         parts2 = [...parts2, part];
