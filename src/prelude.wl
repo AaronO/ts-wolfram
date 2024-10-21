@@ -9,4 +9,4 @@ D[f_Symbol[expr_], x_Symbol] :=
   (D[f[x], x] /. x -> expr) * D[expr, x];
 D[x_, x_Symbol] = 1;
 
-Times[Minus[x_], Minus[y_]] = Times[x, y];
+Times[Minus[x_], Minus[y_]] := Times[x, y];
