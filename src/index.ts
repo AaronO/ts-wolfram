@@ -2,10 +2,11 @@ import { createInterface, Interface } from 'readline';
 import { expr } from './grammar';
 import { fromString } from '@spakhm/ts-parsec';
 import { populateBuiltins } from './builtins';
-import { eval_, repr, sym } from './ast';
+import { eval_, sym } from './ast';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { withUnprotected } from './values';
+import { repr } from './repr';
 
 function q(rl: Interface, query: string): Promise<string> {
   return new Promise((resolve) => {

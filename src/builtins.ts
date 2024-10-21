@@ -1,7 +1,8 @@
-import { Symbol, Expr, isSymbol, isInteger, sym, list, isList, int, form, isForm, eval_, isString, dispatch, Form, str, repr } from './ast';
+import { Symbol, Expr, isSymbol, isInteger, sym, list, isList, int, form, eval_, isString, dispatch, Form, str } from './ast';
 import { attrs, setAttrs, clearAttrs } from './attrs';
 import { match, replace, replaceAll, replaceRepeated, isRule } from './rewrite';
 import { assign, ownValues, downValues, withUnprotected } from './values';
+import { repr } from './repr';
 
 type Builtin = (parts: Expr[], self: Expr) => Expr;
 const builtinsTable: Map<Symbol, Builtin> = new Map();

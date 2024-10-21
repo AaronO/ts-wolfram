@@ -99,13 +99,6 @@ export const dispatch = <T>(e: Expr, d: Dispatch<T>): T => {
   throw "Unknown type";
 }
 
-export const repr = (e: Expr): string => dispatch(e, {
-  Integer: e => e.val.toString(),
-  Symbol: e => e.val,
-  String: e => e.val,
-  Form: e => `${repr(e.head)}[${e.parts.map(x => repr(x)).join(", ")}]`,
-});
-
 export const eval_ = (e: Expr, lenv: Env): Expr => {
   // We don't use `dispatch` to make `eval_` implementation
   // pretty like `repr`, because `dispatch` is about 7 times
