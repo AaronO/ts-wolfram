@@ -39,6 +39,7 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
   if (isForm(e) && isForm(p)) {
     if (e.parts.length != p.parts.length) { return [false, env]; }
     
+    // TODO: this costs *a lot*
     const eparts = [e.head, ...e.parts];
     const pparts = [p.head, ...p.parts];
 
@@ -105,6 +106,7 @@ const matchPatternTest = (e: Expr, p: Form): [boolean, Env] => {
 }
 
 const mergeEnv = (env1: Env, env2: Env): [boolean, Env] => {
+  // TODO: new Map costs a lot here
   const env: Env = new Map(env1);
   for (const k of Array.from(env2.keys())) {
     const v = env2.get(k)!;

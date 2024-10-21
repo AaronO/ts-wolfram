@@ -132,6 +132,7 @@ const evalForm = (f: Form, lenv: Env): Expr => {
     const first = head_.attrs.holdFirst
       ? f.parts[0] : eval_(f.parts[0], lenv);
 
+    // TODO: very expensive
     const rest = head_.attrs.holdRest
       ? f.parts.slice(1) : f.parts.slice(1).map(el => eval_(el, lenv));
 
@@ -150,6 +151,7 @@ const evalForm = (f: Form, lenv: Env): Expr => {
       if (isForm(part) && part.head === head_) {
         parts2 = [...parts2, ...part.parts];
       } else {
+        // TODO: very expensive
         parts2 = [...parts2, part];
       }
     }
