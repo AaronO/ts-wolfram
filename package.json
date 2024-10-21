@@ -53,7 +53,7 @@
     "typescript": "^3.9.10"
   },
   "dependencies": {
-    "@spakhm/ts-parsec": "^0.1.6",
+    "@spakhm/ts-parsec": "^0.1.7",
     "@types/lodash": "^4.17.10",
     "install": "^0.13.0",
     "lodash": "^4.17.21",
