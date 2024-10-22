@@ -1,66 +1,74 @@
-import { Form, Expr, Symbol, eval_, isForm, isSymbol, isInteger, isString, form, sym } from "./ast"
+import { eval_, } from "./ast"
+import { Form, Expr, Symbol, isForm, isSymbol, isInteger, isString, form, sym, isFormHead, Types, Integer, String } from "./expr"
 import { Head } from "./builtins";
 
 export type Env = Map<Symbol, Expr>;
 
-export const match = (e: Expr, p: Expr): [boolean, Env] => {
-  let env: Env = new Map();
+const EMPTY_ENV: Env = new Map();
+const HOLD_PATTERN = sym("HoldPattern");
+const SYM_PATTERN = sym("Pattern");
+const SYM_PATTERN_TEST = sym("PatternTest");
+const SYM_BLANK = sym("Blank");
+const SYM_RULE = sym("Rule");
+const SYM_RULE_DELAYED = sym("RuleDelayed");
 
+export const match = (e: Expr, p: Expr): { matches: boolean, env: Env } => {
+  if (e === p) {
+    return { matches: true, env: EMPTY_ENV };
+  }
   // Treat `HoldPattern` specially
-  if (isForm(p) && isSymbol(p.head, "HoldPattern")) {
-    p = p.parts[0];
+  if (isFormHead(p, HOLD_PATTERN)) {
+    p = (p as Form).parts[0];
   }
 
-  // match patterns first
-  if (isForm(p) && isBlank(p)) {
-    return [matchBlank(e, p), env];
+  // Match special forms
+  if (isFormHead(p, SYM_BLANK)) {
+    return { matches: matchBlank(e, p), env: EMPTY_ENV };
   }
-  if (isForm(p) && isPattern(p)) {
+  if (isFormHead(p, SYM_PATTERN)) {
     return matchPattern(e, p);
   }
-
-  if (isForm(p) && isPatternTest(p)) {
+  if (isFormHead(p, SYM_PATTERN_TEST)) {
     return matchPatternTest(e, p);
   }
 
-  // The rest is essentially deepEqual
-  if (isInteger(e) && isInteger(p)) {
-    return [p.val == e.val, env];
+  // TODO: cleanup (p as Expr), caused by isFormHead
+  if (e.type !== (p as Expr).type) {
+    return { matches: false, env: EMPTY_ENV };
+  } else if (e.type === Types.Symbol) {
+    return { matches: p == e, env: EMPTY_ENV };
+  } else if (e.type === Types.Integer) {
+    return { matches: (p as Integer).val == (e as Integer).val, env: EMPTY_ENV };
+  } else if (e.type === Types.String) {
+    return { matches: (p as String).val == (e as String).val, env: EMPTY_ENV };
+  } else if (e.type === Types.Form) {
+    return matchForm(e as Expr as Form, p as Expr as Form);
+  } else {
+    return { matches: false, env: EMPTY_ENV };
   }
-  
-  if (isString(e) && isString(p)) {
-    return [p.val == e.val, env];
-  }
-  
-  if (isSymbol(e) && isSymbol(p)) {
-    return [p == e, env];
-  }
-  
-  if (isForm(e) && isForm(p)) {
-    if (e.parts.length != p.parts.length) { return [false, env]; }
-
-    // Dup code for head and parts. This is by design. Originally
-    // I made a new array of [head, parts] and ran the loop over
-    // it. But this code is in inner loops, so array allocation
-    // here is very costly.
-    const [matchesp, env_] = match(e.head, p.head);
-    if (!matchesp || !mergeEnv(env, env_)) { return [false, env]; }
-
-    for(let i = 0; i<e.parts.length; i++) {
-      const [matchesp, env_] = match(e.parts[i], p.parts[i]);
-      if (!matchesp || !mergeEnv(env, env_)) { return [false, env]; }
-    }
-    return [true, env];
-  }
-
-  return [false, env];
 }
 
-export const isBlank = (e: Expr) =>
-  isForm(e) && isSymbol(e.head, "Blank");
+const matchForm = (e: Form, p: Form): { matches: boolean, env: Env } => {
+  if (e.parts.length != p.parts.length) { return { matches: false, env: EMPTY_ENV }; }
+
+  let env: Env | null = EMPTY_ENV;
+
+  const { matches: matchesp, env: env_ } = match(e.head, p.head);
+  if (!matchesp) { return { matches: false, env: EMPTY_ENV }; }
+  env = mergeEnv(env, env_);
+  if (env === null) { return { matches: false, env: EMPTY_ENV }; }
+
+  for(let i = 0; i<e.parts.length; i++) {
+    const { matches: matchesp, env: env_ } = match(e.parts[i], p.parts[i]);
+    if (!matchesp) { return { matches: false, env: EMPTY_ENV }; }
+    env = mergeEnv(env, env_);
+    if (env === null) { return { matches: false, env: EMPTY_ENV }; }
+  }
+  return { matches: true, env };
+}
 
 const matchBlank = (e: Expr, p: Form): boolean => {
-  if (!isSymbol(p.head, "Blank")) {
+  if (!isFormHead(p, SYM_BLANK)) {
     return false;
   }
 
@@ -71,72 +79,81 @@ const matchBlank = (e: Expr, p: Form): boolean => {
   return Head([e]) == p.parts[0];
 }
 
-export const isPattern = (e: Expr) =>
-  isForm(e) && isSymbol(e.head, "Pattern");
-
-const matchPattern = (e: Expr, p: Form): [boolean, Env] => {
-  const env: Env = new Map();
+const matchPattern = (e: Expr, p: Form): { matches: boolean, env: Env } => {
   if (!isSymbol(p.parts[0])
     || !isForm(p.parts[1])
-    || !isBlank(p.parts[1]))
+    || !isFormHead(p.parts[1], SYM_BLANK))
   {
     throw "ThisShouldNeverHappenException:)";
   }
   if (!matchBlank(e, p.parts[1])) {
-    return [false, env];
+    return { matches: false, env: EMPTY_ENV };
   }
 
+  const env = new Map();
   env.set(p.parts[0], e);
-  return [true, env];
+  return { matches: true, env };
 }
 
-export const isPatternTest = (e: Expr) =>
-  isForm(e) && isSymbol(e.head, "PatternTest");
-
-const matchPatternTest = (e: Expr, p: Form): [boolean, Env] => {
-  const [matchedp, env] = match(e, p.parts[0]);
+const matchPatternTest = (e: Expr, p: Form): { matches: boolean, env: Env } => {
+  const { matches: matchedp, env } = match(e, p.parts[0]);
   if (!matchedp) {
-    return [false, env];
+    return { matches: false, env: EMPTY_ENV };
   }
 
   const testForm = form(p.parts[1], [e]);
   const passedp = eval_(testForm, env) == sym('True');
 
-  return [passedp, env];
+  return { matches: passedp, env };
 }
 
-const mergeEnv = (acc: Env, mergee: Env): boolean => {
-  for (const k of Array.from(mergee.keys())) {
+const mergeEnv = (acc: Env, mergee: Env): Env | null => {
+  if (acc === EMPTY_ENV && mergee === EMPTY_ENV) {
+    return EMPTY_ENV;
+  }
+  
+  if (acc === EMPTY_ENV) {
+    // return new Map(mergee);
+    return mergee;
+  }
+  
+  if (mergee === EMPTY_ENV) {
+    return acc;
+  }
+
+  const newEnv = new Map(acc);
+  for (const k of mergee.keys()) {
     const v = mergee.get(k)!;
-    if (acc.has(k)) {
-      const [matches] = match(acc.get(k)!, v);
+    if (newEnv.has(k)) {
+      const { matches } = match(newEnv.get(k)!, v);
       if (!matches) {
-        return false;
+        return null;
       }
     } else {
-      acc.set(k,v);
+      newEnv.set(k, v);
     }
   }
 
-  return true;
+  return newEnv;
 }
 
-export const replace = (expr: Expr, rules: [Expr, Expr][]): [boolean, Expr] => {
-  for (const [lhs, rhs] of rules) {
-    const [matchesp, env] = match(expr, lhs);
-    if (matchesp) {
-      return [true, eval_(rhs, env)];
+export const replace = (expr: Expr, rules: [Expr, Expr][]): Expr | null => {
+  for (let i = 0; i < rules.length; i++) {
+    const rule = rules[i];
+    const m = match(expr, rule[0]);
+    if (m.matches) {
+      return eval_(rule[1], m.env);
     }
   }
 
-  return [false, expr];
+  return null;
 }
 
 export const replaceAll = (expr: Expr,  rules: [Expr, Expr][]): Expr => {
   // try the whole expression first
-  const [replacedp, res] = replace(expr, rules);
-  if (replacedp || !isForm(expr)) {
-    return res;
+  const res = replace(expr, rules);
+  if (res !== null || !isForm(expr)) {
+    return res !== null ? res : expr;
   }
 
   return form(
@@ -149,7 +166,7 @@ export const replaceRepeated = (expr: Expr,  rules: [Expr, Expr][]): Expr => {
   let i = 0;
   while (true) {
     const expr_ = replaceAll(expr, rules);
-    const [matchesp] = match(expr, expr_);
+    const { matches: matchesp } = match(expr, expr_);
     if (matchesp) {
       return expr;
     } else {
@@ -172,4 +189,4 @@ export const ruleToPair = (rule: Expr): [Expr, Expr] => {
 export const rulesToPairs = (rules: Expr[]) => rules.map(ruleToPair);
 
 export const isRule = (e: Expr): e is Form =>
-  isForm(e) && isSymbol(e.head) && ["Rule", "RuleDelayed"].includes(e.head.val);
+  isForm(e) && (e.head === SYM_RULE || e.head === SYM_RULE_DELAYED);

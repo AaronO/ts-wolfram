@@ -193,6 +193,10 @@ const ClearAttributes = (parts: Expr[]) => {
   Number operations
 */
 const Plus = (parts: Expr[]) => {
+  if (parts.length == 2 && isInteger(parts[0]) && isInteger(parts[1])) {
+    return int(parts[0].val + parts[1].val);
+  }
+
   let acc: number = 0;
   let rest: Expr[] = [];
   for (const part of parts) {
@@ -309,14 +313,14 @@ const MatchQ = (parts: Expr[]) => {
     throw errArgCount('MatchQ', 2, parts.length);
   }
 
-  const [matches, env] = match(parts[0], parts[1]);
-  if (!matches) {
+  const m = match(parts[0], parts[1]);
+  if (!m.matches) {
     return sym("False");
   }
 
   // Uncomment to debug environment
-  for (const k of Array.from(env.keys())) {
-    //console.log(`${k.repr()} -> ${env.get(k)!.repr()}`);
+  for (const k of Array.from(m.env.keys())) {
+    //console.log(`${k.repr()} -> ${m.env.get(k)!.repr()}`);
   }
 
   return sym("True");
@@ -367,16 +371,12 @@ const Replace = (parts: Expr[]) => {
 
   const expr = parts[0];
   const rules = isList(parts[1]) ? parts[1].parts : [parts[1]];
-  const [replacedp, res] = replace(expr, rules.map(rule => {
+  const replaced = replace(expr, rules.map(rule => {
     if (!isRule(rule)) { throw "Replace expects a rule or a list of rules."; }
     return [rule.parts[0], rule.parts[1]];
   }));
 
-  if (replacedp) {
-    return res;
-  }
-
-  return expr;
+  return replaced ?? expr;
 }
 
 const ReplaceAll = (parts: Expr[]) => {

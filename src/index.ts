@@ -14,15 +14,35 @@ function q(rl: Interface, query: string): Promise<string> {
   });
 }
 
-const main = async () => {
-  populateBuiltins();
+const runFile = async (filePath: string) => {
+  const fileContent = await fs.readFile(filePath, 'utf8');
+  const lines = fileContent.split('\n');
+  const emptyEnv = new Map();
+  let lastResult: any = sym('Null');
 
-  const prelude = expr(fromString(await fs.readFile(path.resolve(__dirname, 'prelude.wl'), 'utf8')));
-  if (prelude.type == 'err') {
-    throw "Couldn't load prelude";
+  for (const line of lines) {
+    if (line.trim() === '') continue;
+
+    const parsed = expr(fromString(line));
+    if (parsed.type == 'err') {
+      console.log(`Parsing error in line: ${line}`);
+      continue;
+    }
+
+    try {
+      lastResult = eval_(parsed.res, emptyEnv);
+    } catch (err) {
+      console.log(`Error evaluating line: ${line}`);
+      console.log(err);
+    }
   }
-  withUnprotected(() => eval_(prelude.res, new Map()));
 
+  if (lastResult != sym('Null')) {
+    console.log(repr(lastResult));
+  }
+}
+
+const runRepl = async () => {
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -45,6 +65,24 @@ const main = async () => {
     } catch (err) {
       console.log(err);
     }
+  }
+}
+
+const main = async () => {
+  populateBuiltins();
+
+  const prelude = expr(fromString(await fs.readFile(path.resolve(__dirname, 'prelude.wl'), 'utf8')));
+  if (prelude.type == 'err') {
+    throw "Couldn't load prelude";
+  }
+  withUnprotected(() => eval_(prelude.res, new Map()));
+
+  const args = process.argv.slice(2);
+  if (args.length > 0) {
+    console.log(`Running file ${args[0]}`);
+    await runFile(args[0]);
+  } else {
+    await runRepl();
   }
 }
 
