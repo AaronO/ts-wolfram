@@ -1,4 +1,5 @@
-import { Symbol, Expr, isSymbol, isInteger, sym, list, isList, int, form, eval_, isString, dispatch, Form, str } from './ast';
+import { Symbol, Expr, isSymbol, isInteger, sym, list, isList, int, form, isString, Form, str } from './expr';
+import { eval_, dispatch } from './ast';
 import { attrs, setAttrs, clearAttrs } from './attrs';
 import { match, replace, replaceAll, replaceRepeated, isRule } from './rewrite';
 import { assign, ownValues, downValues, withUnprotected } from './values';
@@ -314,13 +315,13 @@ const MatchQ = (parts: Expr[]) => {
   }
 
   const m = match(parts[0], parts[1]);
-  if (!m.matches) {
+  if (!m.matchp) {
     return sym("False");
   }
 
   // Uncomment to debug environment
   for (const k of Array.from(m.env.keys())) {
-    //console.log(`${k.repr()} -> ${m.env.get(k)!.repr()}`);
+    //console.log(`${repr(k)} -> ${repr(m.env.get(k)!)}`);
   }
 
   return sym("True");

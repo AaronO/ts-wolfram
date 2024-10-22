@@ -1,4 +1,5 @@
-import { Expr, Form, dispatch, isForm, isSymbol } from './ast';
+import { Expr, Form, isForm, isSymbol } from './expr';
+import { dispatch } from './ast';
 
 export const repr = (e: Expr): string => dispatch(e, {
   Integer: e => e.val.toString(),

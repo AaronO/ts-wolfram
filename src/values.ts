@@ -1,4 +1,4 @@
-import { Symbol, Expr, isSymbol, isForm, form, sym } from './ast';
+import { Symbol, Expr, isSymbol, isForm, form, sym } from './expr';
 import { attrs } from './attrs';
 import { isRule } from './rewrite';
 

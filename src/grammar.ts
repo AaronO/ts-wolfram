@@ -1,10 +1,11 @@
-import { Integer, Form, Expr, isInteger } from './ast';
+import { Integer, Form, Expr, isInteger,
+  sym, list, form, int, str
+ } from './expr';
 import {
   seq, alpha, many, alnum, nat, either, sepBy,
   binop, binopr, stream, fwd, lex, parser, not,
   peek, maybe, some, anych
 } from '@spakhm/ts-parsec';
-import { sym, list, form, int, str } from './ast';
 
 /*
   Grammar entry point.

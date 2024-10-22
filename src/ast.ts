@@ -2,9 +2,7 @@ import { builtin } from './builtins';
 import { replaceRepeated, rulesToPairs, Env } from './rewrite';
 import { downValues, ownValues } from './values';
 import type { Expr, Form, Integer, String, Symbol } from './expr';
-import { form, isForm, isSymbol, sym, Types } from './expr';
-
-export * from './expr';
+import { form, isForm, isSymbol, Types } from './expr';
 
 export type Dispatch<T> = {
   Integer: (i: Integer) => T,

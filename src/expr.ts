@@ -28,7 +28,6 @@ export type String = {
   val: string,
 }
 
-export const isForm = (e: Expr): e is Form => e.type == Types.Form;
 export const isInteger = (e: Expr): e is Integer => e.type == Types.Integer;
 export const isString = (e: Expr): e is String => e.type == Types.String;
 export const isSymbol = (e: Expr, s?: string): e is Symbol => {
@@ -40,11 +39,10 @@ export const isSymbol = (e: Expr, s?: string): e is Symbol => {
   }
   return true;
 }
-
-export const form = (head: Expr, parts: Expr[]): Form => ({
-  type: Types.Form,
-  head, parts,
-});
+export const isForm = (e: Expr): e is Form => e.type == Types.Form;
+export const isFormHead = <T extends Symbol>(e: Expr, x: T): e is Form & { head: T } =>
+  (e as Form).head === x;
+export const isList = (e: Expr): e is Form => isForm(e) && isSymbol(e.head, "List");
 
 export const int = (val: number): Integer => ({
   type: Types.Integer,
@@ -73,6 +71,9 @@ export const sym = (val: string): Symbol => {
   }
 }
 
+export const form = (head: Expr, parts: Expr[]): Form => ({
+  type: Types.Form,
+  head, parts,
+});
+
 export const list = (els: Expr[]) => form(sym("List"), els);
-export const isList = (e: Expr): e is Form => isForm(e) && isSymbol(e.head, "List");
-export const isFormHead = (e: Expr, x: Symbol): e is Form => (e as Form).head === x;

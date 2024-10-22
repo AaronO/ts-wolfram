@@ -1,5 +1,5 @@
-import type { Symbol } from './ast';
-import { sym } from './ast';
+import type { Symbol } from './expr';
+import { sym } from './expr';
 
 export type AttrVec = {
   holdFirst?: boolean,

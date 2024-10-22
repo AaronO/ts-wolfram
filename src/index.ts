@@ -2,7 +2,8 @@ import { createInterface, Interface } from 'readline';
 import { expr } from './grammar';
 import { fromString } from '@spakhm/ts-parsec';
 import { populateBuiltins } from './builtins';
-import { eval_, sym } from './ast';
+import { eval_ } from './ast';
+import { Expr, sym } from './expr';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { withUnprotected } from './values';
@@ -18,7 +19,7 @@ const runFile = async (filePath: string) => {
   const fileContent = await fs.readFile(filePath, 'utf8');
   const lines = fileContent.split('\n');
   const emptyEnv = new Map();
-  let lastResult: any = sym('Null');
+  let lastResult: Expr = sym('Null');
 
   for (const line of lines) {
     if (line.trim() === '') continue;
