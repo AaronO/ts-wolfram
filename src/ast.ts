@@ -142,14 +142,13 @@ const evalForm = (f: Form, lenv: Env): Expr => {
     return form(head_, parts_);
   }
 
-  if (head_.attrs.flat) {
+  if (head_.attrs.flat && parts_.some(p => isForm(p) && p.head == head_)) {
     let parts2: Expr[] = [];
     for (const part of parts_) {
       if (isForm(part) && part.head === head_) {
         parts2 = [...parts2, ...part.parts];
       } else {
-        // TODO: very expensive
-        parts2 = [...parts2, part];
+        parts2.push(part);
       }
     }
     parts_ = parts2;
