@@ -38,17 +38,17 @@ export const match = (e: Expr, p: Expr): [boolean, Env] => {
   
   if (isForm(e) && isForm(p)) {
     if (e.parts.length != p.parts.length) { return [false, env]; }
-    
-    // TODO: this costs *a lot*
-    const eparts = [e.head, ...e.parts];
-    const pparts = [p.head, ...p.parts];
 
-    for(let i = 0; i<eparts.length; i++) {
-      let [matchesp, env_] = match(eparts[i], pparts[i]);
-      if (!matchesp) { return [false, env]; }
+    // Dup code for head and parts. This is by design. Originally
+    // I made a new array of [head, parts] and ran the loop over
+    // it. But this code is in inner loops, so array allocation
+    // here is very costly.
+    const [matchesp, env_] = match(e.head, p.head);
+    if (!matchesp || !mergeEnv(env, env_)) { return [false, env]; }
 
-      [matchesp, env] = mergeEnv(env, env_);
-      if (!matchesp) { return [false, env]; }
+    for(let i = 0; i<e.parts.length; i++) {
+      const [matchesp, env_] = match(e.parts[i], p.parts[i]);
+      if (!matchesp || !mergeEnv(env, env_)) { return [false, env]; }
     }
     return [true, env];
   }
@@ -105,22 +105,20 @@ const matchPatternTest = (e: Expr, p: Form): [boolean, Env] => {
   return [passedp, env];
 }
 
-const mergeEnv = (env1: Env, env2: Env): [boolean, Env] => {
-  // TODO: new Map costs a lot here
-  const env: Env = new Map(env1);
-  for (const k of Array.from(env2.keys())) {
-    const v = env2.get(k)!;
-    if (env.has(k)) {
-      const [matches] = match(env.get(k)!, v);
+const mergeEnv = (acc: Env, mergee: Env): boolean => {
+  for (const k of Array.from(mergee.keys())) {
+    const v = mergee.get(k)!;
+    if (acc.has(k)) {
+      const [matches] = match(acc.get(k)!, v);
       if (!matches) {
-        return [false, env];
+        return false;
       }
     } else {
-      env.set(k,v);
+      acc.set(k,v);
     }
   }
 
-  return [true, env];
+  return true;
 }
 
 export const replace = (expr: Expr, rules: [Expr, Expr][]): [boolean, Expr] => {
