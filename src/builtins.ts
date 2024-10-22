@@ -107,6 +107,9 @@ const populateBuiltins_ = () => {
   setAttrs(sym('Timing'), ["HoldAll", "Protected"].map(sym));
 
   // Misc
+  builtinsTable.set(sym('FullForm'), FullForm);
+  setAttrs(sym('FullForm'), ["Protected"].map(sym));
+
   builtinsTable.set(sym('ToString'), ToString);
   setAttrs(sym('ToString'), ["Protected"].map(sym));
 
@@ -533,6 +536,14 @@ const Timing = (parts: Expr[]) => {
 /*
   Misc
 */
+const FullForm = (parts: Expr[], self: Expr) => {
+  if (parts.length != 1) {
+    throw errArgCount('FullForm', 1, parts.length);
+  }
+
+  return self;
+}
+
 const ToString = (parts: Expr[]) => {
   if (parts.length != 1) {
     throw errArgCount('ToString', 1, parts.length);
