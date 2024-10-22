@@ -127,21 +127,18 @@ const evalSym = (sym: Symbol, localEnv: Env): Expr => {
 const evalForm = (f: Form, lenv: Env): Expr => {
   const head_ = eval_(f.head, lenv);
   
-  let parts_: Expr[];
-  if (isSymbol(head_) && f.parts.length > 0) {
-    const first = head_.attrs.holdFirst
-      ? f.parts[0] : eval_(f.parts[0], lenv);
+  let parts_ = new Array<Expr>(f.parts.length);
+  if (f.parts.length > 0) {
+    parts_[0] = (isSymbol(head_) && head_.attrs.holdFirst) ?
+      f.parts[0] : eval_(f.parts[0], lenv);
 
-    // TODO: very expensive
-    const rest = head_.attrs.holdRest
-      ? f.parts.slice(1) : f.parts.slice(1).map(el => eval_(el, lenv));
-
-    parts_ = [first, ...rest];
-  } else {
-    parts_ = f.parts.map(el => eval_(el, lenv));
+    for (let i = 1; i < f.parts.length; i++) {
+      parts_[i] = (isSymbol(head_) && head_.attrs.holdRest) ?
+        f.parts[i] : eval_(f.parts[i], lenv);
+    }
   }
 
-  if (!(isSymbol(head_))) {
+  if (!isSymbol(head_)) {
     return form(head_, parts_);
   }
 
