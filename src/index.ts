@@ -5,14 +5,20 @@ import { populateBuiltins } from './builtins';
 import { eval_ } from './ast';
 import { Expr, sym } from './expr';
 import { promises as fs } from 'fs';
-import * as path from 'path';
-import { withUnprotected } from './values';
 import { repr } from './repr';
+import { loadWlFile } from './loader';
 
-function q(rl: Interface, query: string): Promise<string> {
-  return new Promise((resolve) => {
-    rl.question(query, resolve);
-  });
+const main = async () => {
+  populateBuiltins();
+  await loadWlFile(__dirname, 'prelude.wl');
+
+  const args = process.argv.slice(2);
+  if (args.length > 0) {
+    console.log(`Running file ${args[0]}`);
+    await runFile(args[0]);
+  } else {
+    await runRepl();
+  }
 }
 
 const runFile = async (filePath: string) => {
@@ -69,22 +75,10 @@ const runRepl = async () => {
   }
 }
 
-const main = async () => {
-  populateBuiltins();
-
-  const prelude = expr(fromString(await fs.readFile(path.resolve(__dirname, 'prelude.wl'), 'utf8')));
-  if (prelude.type == 'err') {
-    throw "Couldn't load prelude";
-  }
-  withUnprotected(() => eval_(prelude.res, new Map()));
-
-  const args = process.argv.slice(2);
-  if (args.length > 0) {
-    console.log(`Running file ${args[0]}`);
-    await runFile(args[0]);
-  } else {
-    await runRepl();
-  }
+function q(rl: Interface, query: string): Promise<string> {
+  return new Promise((resolve) => {
+    rl.question(query, resolve);
+  });
 }
 
 main();
