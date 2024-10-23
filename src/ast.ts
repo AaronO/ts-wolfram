@@ -24,7 +24,7 @@ export const dispatch = <T>(e: Expr, d: Dispatch<T>): T => {
   throw "Unknown type";
 }
 
-export const eval_ = (e: Expr, lenv: Env): Expr => {
+export const eval_ = (e: Expr, lenv: Readonly<Env>): Expr => {
   // We don't use `dispatch` to make `eval_` implementation
   // pretty like `repr`, because `dispatch` is about 7 times
   // slower than branching like this.
@@ -40,7 +40,7 @@ export const eval_ = (e: Expr, lenv: Env): Expr => {
   throw "Unknown type";
 };
 
-const evalSym = (sym: Symbol, localEnv: Env): Expr => {
+const evalSym = (sym: Symbol, localEnv: Readonly<Env>): Expr => {
   if (localEnv.has(sym)) {
     return localEnv.get(sym)!;
   }
@@ -49,7 +49,7 @@ const evalSym = (sym: Symbol, localEnv: Env): Expr => {
   return ownvals ? replaceRepeated(sym, rulesToPairs(ownvals)) : sym;
 }
 
-const evalForm = (f: Form, lenv: Env): Expr => {
+const evalForm = (f: Form, lenv: Readonly<Env>): Expr => {
   const head_ = eval_(f.head, lenv);
   
   let parts_ = new Array<Expr>(f.parts.length);

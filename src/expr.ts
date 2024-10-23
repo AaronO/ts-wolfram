@@ -40,8 +40,6 @@ export const isSymbol = (e: Expr, s?: string): e is Symbol => {
   return true;
 }
 export const isForm = (e: Expr): e is Form => e.type == Types.Form;
-export const isFormHead = <T extends Symbol>(e: Expr, x: T): e is Form & { head: T } =>
-  (e as Form).head === x;
 export const isList = (e: Expr): e is Form => isForm(e) && isSymbol(e.head, "List");
 
 export const int = (val: number): Integer => ({

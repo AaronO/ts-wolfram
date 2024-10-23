@@ -1,10 +1,9 @@
 import { eval_, } from "./ast"
-import { Form, Expr, Symbol, isForm, isSymbol, form, sym, isFormHead, Types, Integer, String } from "./expr"
+import { Form, Expr, Symbol, isForm, isSymbol, form, sym, Types, Integer, String } from "./expr"
 import { Head } from "./builtins";
 
 export type Env = Map<Symbol, Expr>;
 
-const EMPTY_ENV: Env = new Map();
 const HOLD_PATTERN = sym("HoldPattern");
 const SYM_PATTERN = sym("Pattern");
 const SYM_PATTERN_TEST = sym("PatternTest");
@@ -12,10 +11,11 @@ const SYM_BLANK = sym("Blank");
 const SYM_RULE = sym("Rule");
 const SYM_RULE_DELAYED = sym("RuleDelayed");
 
-export const match = (e: Expr, p: Expr): { matchp: boolean, env: Env } => {
+export const match = (e: Expr, p: Expr, env: Env): boolean => {
   if (e === p) {
-    return { matchp: true, env: EMPTY_ENV };
+    return true;
   }
+
   // Treat `HoldPattern` specially
   if (isFormHead(p, HOLD_PATTERN)) {
     p = p.parts[0];
@@ -23,47 +23,33 @@ export const match = (e: Expr, p: Expr): { matchp: boolean, env: Env } => {
 
   // Match special forms
   if (isFormHead(p, SYM_BLANK)) {
-    return { matchp: matchBlank(e, p), env: EMPTY_ENV };
+    return matchBlank(e, p);
   }
   if (isFormHead(p, SYM_PATTERN)) {
-    return matchPattern(e, p);
+    return matchPattern(e, p, env);
   }
   if (isFormHead(p, SYM_PATTERN_TEST)) {
-    return matchPatternTest(e, p);
+    return matchPatternTest(e, p, env);
   }
 
-  if (e.type !== p.type) {
-    return { matchp: false, env: EMPTY_ENV };
-  } else if (e.type === Types.Symbol) {
-    return { matchp: p == e, env: EMPTY_ENV };
-  } else if (e.type === Types.Integer) {
-    return { matchp: (p as Integer).val == (e as Integer).val, env: EMPTY_ENV };
-  } else if (e.type === Types.String) {
-    return { matchp: (p as String).val == (e as String).val, env: EMPTY_ENV };
-  } else if (e.type === Types.Form) {
-    return matchForm(e as Expr as Form, p as Expr as Form);
-  } else {
-    return { matchp: false, env: EMPTY_ENV };
-  }
+  // No immediate patterns
+  return deepEqualAtom(e, p) || matchForm(e, p, env);
 }
 
-const matchForm = (e: Form, p: Form): { matchp: boolean, env: Env } => {
-  if (e.parts.length != p.parts.length) { return { matchp: false, env: EMPTY_ENV }; }
+const matchForm = (e: Expr, p: Expr, env: Env): boolean => {
+  if (e.type != Types.Form || p.type != Types.Form) { return false; }
+  if (e.parts.length != p.parts.length) { return false; }
 
-  let env: Env | null = EMPTY_ENV;
-
-  const { matchp, env: env_ } = match(e.head, p.head);
-  if (!matchp) { return { matchp: false, env: EMPTY_ENV }; }
-  env = mergeEnv(env, env_);
-  if (env === null) { return { matchp: false, env: EMPTY_ENV }; }
+  if (!match(e.head, p.head, env)) {
+    return false;
+  }
 
   for(let i = 0; i<e.parts.length; i++) {
-    const { matchp, env: env_ } = match(e.parts[i], p.parts[i]);
-    if (!matchp) { return { matchp: false, env: EMPTY_ENV }; }
-    env = mergeEnv(env, env_);
-    if (env === null) { return { matchp: false, env: EMPTY_ENV }; }
+    if (!match(e.parts[i], p.parts[i], env)) {
+      return false;
+    }
   }
-  return { matchp: true, env };
+  return true;
 }
 
 const matchBlank = (e: Expr, p: Form): boolean => {
@@ -78,7 +64,7 @@ const matchBlank = (e: Expr, p: Form): boolean => {
   return Head([e]) == p.parts[0];
 }
 
-const matchPattern = (e: Expr, p: Form): { matchp: boolean, env: Env } => {
+const matchPattern = (e: Expr, p: Form, env: Env): boolean => {
   if (!isSymbol(p.parts[0])
     || !isForm(p.parts[1])
     || !isFormHead(p.parts[1], SYM_BLANK))
@@ -86,62 +72,33 @@ const matchPattern = (e: Expr, p: Form): { matchp: boolean, env: Env } => {
     throw "ThisShouldNeverHappenException:)";
   }
   if (!matchBlank(e, p.parts[1])) {
-    return { matchp: false, env: EMPTY_ENV };
+    return false;
   }
 
-  const env = new Map();
-  env.set(p.parts[0], e);
-  return { matchp: true, env };
+  const k = p.parts[0];
+  if (env.has(k)) {
+    return deepEqual(env.get(k)!, e);
+  }
+
+  env.set(k, e);
+  return true;
 }
 
-const matchPatternTest = (e: Expr, p: Form): { matchp: boolean, env: Env } => {
-  const { matchp, env } = match(e, p.parts[0]);
-  if (!matchp) {
-    return { matchp: false, env: EMPTY_ENV };
+const matchPatternTest = (e: Expr, p: Form, env: Env): boolean => {
+  if (!match(e, p.parts[0], env)) {
+    return false;
   }
 
   const testForm = form(p.parts[1], [e]);
-  const passedp = eval_(testForm, env) == sym('True');
-
-  return { matchp: passedp, env };
-}
-
-const mergeEnv = (acc: Env, mergee: Env): Env | null => {
-  if (acc === EMPTY_ENV && mergee === EMPTY_ENV) {
-    return EMPTY_ENV;
-  }
-  
-  if (acc === EMPTY_ENV) {
-    // return new Map(mergee);
-    return mergee;
-  }
-  
-  if (mergee === EMPTY_ENV) {
-    return acc;
-  }
-
-  const newEnv = new Map(acc);
-  for (const k of mergee.keys()) {
-    const v = mergee.get(k)!;
-    if (newEnv.has(k)) {
-      const { matchp } = match(newEnv.get(k)!, v);
-      if (!matchp) {
-        return null;
-      }
-    } else {
-      newEnv.set(k, v);
-    }
-  }
-
-  return newEnv;
+  return eval_(testForm, env) == sym('True');
 }
 
 export const replace = (expr: Expr, rules: [Expr, Expr][]): Expr | null => {
   for (let i = 0; i < rules.length; i++) {
     const rule = rules[i];
-    const m = match(expr, rule[0]);
-    if (m.matchp) {
-      return eval_(rule[1], m.env);
+    const env: Env = new Map();
+    if (match(expr, rule[0], env)) {
+      return eval_(rule[1], env);
     }
   }
 
@@ -165,8 +122,7 @@ export const replaceRepeated = (expr: Expr,  rules: [Expr, Expr][]): Expr => {
   let i = 0;
   while (true) {
     const expr_ = replaceAll(expr, rules);
-    const { matchp } = match(expr, expr_);
-    if (matchp) {
+    if (deepEqual(expr, expr_)) {
       return expr;
     } else {
       expr = expr_;
@@ -189,3 +145,44 @@ export const rulesToPairs = (rules: Expr[]) => rules.map(ruleToPair);
 
 export const isRule = (e: Expr): e is Form =>
   isForm(e) && (e.head === SYM_RULE || e.head === SYM_RULE_DELAYED);
+
+/*
+  Deep equal
+*/
+const deepEqualAtom = (e1: Expr, e2: Expr): boolean => {
+  if (e1 === e2) {
+    return true;
+  } else if (e1.type !== e2.type) {
+    return false;
+  } else if (e1.type === Types.Symbol) {
+    return e1 == e2;
+  } else if (e1.type === Types.Integer) {
+    return e1.val === (e2 as Integer).val;
+  } else if (e1.type === Types.String) {
+    return e1.val === (e2 as String).val;
+  } else {
+    return false;
+  }
+}
+
+const deepEqualForm = (f1: Expr, f2: Expr): boolean => {
+  if (f1.type != Types.Form || f2.type != Types.Form) { return false; }
+  if (f1.parts.length != f2.parts.length) { return false; }
+
+  if (!deepEqual(f1.head, f2.head)) {
+    return false;
+  }
+
+  for(let i = 0; i<f1.parts.length; i++) {
+    if (!deepEqual(f1.parts[i], f2.parts[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+const deepEqual = (e1: Expr, e2: Expr): boolean =>
+  deepEqualAtom(e1, e2) || deepEqualForm(e1, e2);
+
+const isFormHead = <T extends Symbol>(e: Expr, x: T): e is Form & { head: T } =>
+  (e as Form).head === x;

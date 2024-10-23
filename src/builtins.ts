@@ -1,7 +1,7 @@
 import { Symbol, Expr, isSymbol, isInteger, sym, list, isList, int, form, isString, Form, str } from './expr';
 import { eval_, dispatch } from './ast';
 import { attrs, setAttrs, clearAttrs } from './attrs';
-import { match, replace, replaceAll, replaceRepeated, isRule } from './rewrite';
+import { match, replace, replaceAll, replaceRepeated, isRule, Env } from './rewrite';
 import { assign, ownValues, downValues, withUnprotected } from './values';
 import { repr } from './repr';
 
@@ -314,14 +314,14 @@ const MatchQ = (parts: Expr[]) => {
     throw errArgCount('MatchQ', 2, parts.length);
   }
 
-  const m = match(parts[0], parts[1]);
-  if (!m.matchp) {
+  const env: Env = new Map();
+  if (!match(parts[0], parts[1], env)) {
     return sym("False");
   }
 
   // Uncomment to debug environment
-  for (const k of Array.from(m.env.keys())) {
-    //console.log(`${repr(k)} -> ${repr(m.env.get(k)!)}`);
+  for (const k of Array.from(env.keys())) {
+    //console.log(`${repr(k)} -> ${repr(env.get(k)!)}`);
   }
 
   return sym("True");
