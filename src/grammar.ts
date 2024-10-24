@@ -104,7 +104,7 @@ const blank = fwd(() => lex(seq('_', maybe(symbol_)).map2((_, s) =>
 const symbol_ = lex(seq(alpha, many(alnum)).map2((ft, rt) =>
   sym([ft, ...rt].join(""))));
 
-const string_ = lex(seq('"', many(seq(not(peek('"')), anych).map2((_, c) => c)), '"').map2((_, cs) =>
+const string_ = lex(seq('"', many(anych({ but: '"' })), '"').map2((_, cs) =>
   str(cs.join(""))));
 
 const integer = nat.map<Integer>(val =>
