@@ -20,6 +20,10 @@ const reprForm = (f: Form) => {
     res = f.parts.map(reprMaybeParenExpr).join(" ");
   } else if (isSymbol(f.head, "List")) {
     res = `{${f.parts.map(repr).join(", ")}}`;
+  } else if (isSymbol(f.head, "ReplaceAll")) {
+    res = `${repr(f.parts[0])} /. ${repr(f.parts[1])}`;
+  } else if (isSymbol(f.head, "ReplaceRepeated")) {
+    res = `${repr(f.parts[0])} //. ${repr(f.parts[1])}`;
   } else if (isSymbol(f.head, "FullForm")) {
     res = dumbRepr(f.parts[0]);
   } else {
