@@ -116,6 +116,13 @@ const populateBuiltins_ = () => {
 
   builtinsTable.set(sym('StringJoin'), StringJoin);
   setAttrs(sym('StringJoin'), ["Flat", "Protected"].map(sym));
+
+  // Control Flow
+  builtinsTable.set(sym('If'), If);
+  setAttrs(sym('If'), ['HoldRest', 'Protected'].map(sym));
+
+  builtinsTable.set(sym('Switch'), Switch);
+  setAttrs(sym('Switch'), ['HoldRest', 'Protected'].map(sym));
 }
 
 /*
@@ -570,3 +577,48 @@ const errArgCount = (fnname: string, expected: number | string, actual: number) 
 
 const errArgType = (fnname: string, types: string[]) =>
   `${fnname} expects ${types.join(" or ")}.`;
+/*
+  Control Flow
+*/
+const If = (parts: Expr[], self: Expr) => {
+  if (parts.length < 2 || parts.length > 3) {
+    throw errArgCount('If', '2 or 3', parts.length);
+  }
+
+  const condition = eval_(parts[0], new Map());
+  if (!isSymbol(condition)) {
+    throw 'If condition must evaluate to True or False';
+  }
+
+  if (condition === sym('True')) {
+    return eval_(parts[1], new Map());
+  } else if (condition === sym('False')) {
+    return parts.length === 3 ? eval_(parts[2], new Map()) : sym('Null');
+  } else {
+    throw 'If condition must evaluate to True or False';
+  }
+}
+
+const Switch = (parts: Expr[], self: Expr) => {
+  if (parts.length < 1) {
+    throw errArgCount('Switch', '1 or more', parts.length);
+  }
+
+  const env = new Map();
+  const expr = eval_(parts[0], env);
+  
+  // Process pairs of pattern and value
+  for (let i = 1; i < parts.length - 1; i += 2) {
+    const pattern = eval_(parts[i], env);
+    if (match(expr, pattern, env)) {
+      return eval_(parts[i + 1], env);
+    }
+  }
+
+  // If we have a final unpaired value, it's the default case
+  if (parts.length % 2 === 0) {
+    return eval_(parts[parts.length - 1], env);
+  }
+  // No default value
+  return sym('Null');
+}
